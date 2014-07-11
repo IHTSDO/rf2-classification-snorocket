@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<params>
+<!-- default module id for relationships of metadata root concept -->
+	<moduleId>900000000000207008</moduleId>
+<!-- effective time for inferred relationships -->
+	<release_date>20140731</release_date>
+<!-- concept file  -->
+	<concept_snapshot_file>/Users/ar/Downloads/Archive 2/sct2_Concept_Snapshot_INT_20140731.txt</concept_snapshot_file>
+<!-- stated relationship file -->	
+	<relationship_snapshot_file>/Users/ar/Downloads/Archive 2/sct2_StatedRelationship_Snapshot_INT_20140731.txt</relationship_snapshot_file>
+<!-- detected cycles output file -->	
+	<detected_cycles_output_file>/Users/ar/Downloads/Archive 2/detectedCycles.txt</detected_cycles_output_file>
+<!-- equivalent concepts output file -->	
+	<equivalent_concept_output_file>/Users/ar/Downloads/Archive 2/EquivConcepts.txt</equivalent_concept_output_file>
+<!-- -optional- previous inferred relationships to reconciliate groups number-->	
+	<previous_inferred_relationship_snapshot_file>/Users/ar/Downloads/sct2_Relationship_Snapshot_INT_20140731.txt</previous_inferred_relationship_snapshot_file>
+<!-- inferred relationship output file -->
+	<inferred_relationships_output_file>/Users/ar/Downloads/Archive 2/sct2_InferredRelationship_Snapshot_INT_20140731.txt</inferred_relationships_output_file>
+</params>
