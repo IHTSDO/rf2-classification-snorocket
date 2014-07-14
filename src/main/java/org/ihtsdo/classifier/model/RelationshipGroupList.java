@@ -21,10 +21,10 @@ import java.util.Iterator;
 import java.util.List;
 
 /**
- * The Class SnoGrpList.
+ * The Class RelationshipGroupList.
  * Represents a relationship group list
  */
-public class SnoGrpList extends ArrayList<SnoGrp> {
+public class RelationshipGroupList extends ArrayList<RelationshipGroup> {
     
     /** The Constant serialVersionUID. */
     private static final long serialVersionUID = 1L;
@@ -32,12 +32,12 @@ public class SnoGrpList extends ArrayList<SnoGrp> {
     /**
      * Instantiates a new sno grp list.
      */
-    public SnoGrpList() {
+    public RelationshipGroupList() {
         super();
     }
 
     /**
-     * Construct a ROLE_GROUP_LIST from <code>List&lt;SnoRel&gt;</code><br>
+     * Construct a ROLE_GROUP_LIST from <code>List&lt;Relationship&gt;</code><br>
      * <br>
      * <font color=#990099> IMPLEMENTATION NOTE: roleGroups MUST be pre-sorted
      * in C1-Group-Type-C2 order for this routine. Pre-sorting is used to
@@ -45,27 +45,27 @@ public class SnoGrpList extends ArrayList<SnoGrp> {
      *
      * @param rels the rels
      */
-    public SnoGrpList(List<SnoRel> rels) {
+    public RelationshipGroupList(List<Relationship> rels) {
         super();
         // First Group
-        SnoGrp group = new SnoGrp();
+        RelationshipGroup group = new RelationshipGroup();
         this.add(group);
 
-        // First SnoRel in First Group
-        Iterator<SnoRel> it = rels.iterator();
-        SnoRel snoRelA = it.next();
-        group.add(snoRelA);
+        // First Relationship in First Group
+        Iterator<Relationship> it = rels.iterator();
+        Relationship relationshipA = it.next();
+        group.add(relationshipA);
 
         while (it.hasNext()) {
-            SnoRel snoRelB = it.next();
-            if (snoRelB.group == snoRelA.group) {
-                group.add(snoRelB); // ADD TO SAME GROUP
+            Relationship relationshipB = it.next();
+            if (relationshipB.group == relationshipA.group) {
+                group.add(relationshipB); // ADD TO SAME GROUP
             } else {
-                group = new SnoGrp(); // CREATE NEW GROUP
+                group = new RelationshipGroup(); // CREATE NEW GROUP
                 this.add(group); // ADD GROUP TO GROUP LIST
-                group.add(snoRelB);
+                group.add(relationshipB);
             }
-            snoRelA = snoRelB;
+            relationshipA = relationshipB;
         }
     }
 
@@ -76,7 +76,7 @@ public class SnoGrpList extends ArrayList<SnoGrp> {
      */
     public int countRels() {
         int returnCount = 0;
-        for (SnoGrp sg : this)
+        for (RelationshipGroup sg : this)
             returnCount += sg.size();
         return returnCount;
     }
@@ -90,13 +90,13 @@ public class SnoGrpList extends ArrayList<SnoGrp> {
      * provide overall computational efficiency.</font>
      *
      * @param groupListB the group list b
-     * @return <code>SnoGrpList</code>
+     * @return <code>RelationshipGroupList</code>
      */
-    public SnoGrpList whichNotEqual(SnoGrpList groupListB) {
-        SnoGrpList sg = new SnoGrpList();
-        for (SnoGrp groupA : this) {
+    public RelationshipGroupList whichNotEqual(RelationshipGroupList groupListB) {
+        RelationshipGroupList sg = new RelationshipGroupList();
+        for (RelationshipGroup groupA : this) {
             boolean foundEqual = false;
-            for (SnoGrp groupB : groupListB) {
+            for (RelationshipGroup groupB : groupListB) {
                 if (groupA.equals(groupB)) {
                     foundEqual = true;
                     break;

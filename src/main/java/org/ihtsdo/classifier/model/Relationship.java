@@ -23,62 +23,60 @@ import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-import javax.swing.text.StyleContext.SmallAttributeSet;
-
 /**
- * The Class SnoRel.
+ * The Class Relationship.
  * Represents a relationship.
  */
-public class SnoRel implements Comparable<Object> {
+public class Relationship implements Comparable<Object> {
 
-    /** The rel nid. */
-    public String relNid;
+    /** The relationship Id. */
+    public String relationshipId;
     
-    /** The c1 id. */
-    public int c1Id; // from I_RelVersioned
+    /** The source Id. */
+    public int sourceId; 
     
-    /** The c2 id. */
-    public int c2Id; // from I_RelVersioned
+    /** The destination Id. */
+    public int destinationId;
     
     /** The type id. */
-    public int typeId; // from I_RelPart
+    public int typeId;
     
     /** The group. */
-    public int group; // from I_RelPart
+    public int group;
 
-    // SnoRel form a versioned "new" database perspective
+    // Relationship form a versioned "new" database perspective
     /**
      * Instantiates a new sno rel.
      *
-     * @param c1Id the c1 id
-     * @param c2Id the c2 id
+     * @param sourceId the c1 id
+     * @param destinationId the c2 id
      * @param roleTypeId the role type id
      * @param group the group
-     * @param relNid the rel nid
+     * @param relationshipId the rel nid
      */
-    public SnoRel(int c1Id, int c2Id, int roleTypeId, int group,String relNid) {
-        this.c1Id = c1Id;
-        this.c2Id = c2Id;
+    public Relationship(int sourceId, int destinationId, int roleTypeId, int group, String relationshipId) {
+        this.sourceId = sourceId;
+        this.destinationId = destinationId;
         this.typeId = roleTypeId;
         this.group = group;
-        this.relNid = relNid;
+        this.relationshipId = relationshipId;
     }
 
-    // SnoRel from a SnoRocket perspective
+    // Relationship from a SnoRocket perspective
     /**
      * Instantiates a new sno rel.
      *
-     * @param c1Id the c1 id
-     * @param c2Id the c2 id
+     * @param sourceId the c1 id
+     * @param destinationId the c2 id
      * @param roleTypeId the role type id
      * @param group the group
      */
-    public SnoRel(int c1Id, int c2Id, int roleTypeId, int group) {
-        this.c1Id = c1Id;
-        this.c2Id = c2Id;
+    public Relationship(int sourceId, int destinationId, int roleTypeId, int group) {
+        this.sourceId = sourceId;
+        this.destinationId = destinationId;
         this.typeId = roleTypeId;
         this.group = group;
-        this.relNid = "null";
+        this.relationshipId = "null";
     }
 
     /**
@@ -87,7 +85,7 @@ public class SnoRel implements Comparable<Object> {
      * @return the rel id
      */
     public String getRelId() {
-        return relNid;
+        return relationshipId;
     }
 
     /**
@@ -96,7 +94,7 @@ public class SnoRel implements Comparable<Object> {
      * @param nid the new nid
      */
     public void setNid(String nid) {
-        this.relNid = nid;
+        this.relationshipId = nid;
     }
 
     // default sort order [c1-group-type-c2]
@@ -104,12 +102,12 @@ public class SnoRel implements Comparable<Object> {
      * @see java.lang.Comparable#compareTo(java.lang.Object)
      */
     public int compareTo(Object o) {
-        SnoRel other = (SnoRel) o;
+        Relationship other = (Relationship) o;
         int thisMore = 1;
         int thisLess = -1;
-        if (this.c1Id > other.c1Id) {
+        if (this.sourceId > other.sourceId) {
             return thisMore;
-        } else if (this.c1Id < other.c1Id) {
+        } else if (this.sourceId < other.sourceId) {
             return thisLess;
         } else {
             if (this.group > other.group) {
@@ -122,9 +120,9 @@ public class SnoRel implements Comparable<Object> {
                 } else if (this.typeId < other.typeId) {
                     return thisLess;
                 } else {
-                    if (this.c2Id > other.c2Id) {
+                    if (this.destinationId > other.destinationId) {
                         return thisMore;
-                    } else if (this.c2Id < other.c2Id) {
+                    } else if (this.destinationId < other.destinationId) {
                         return thisLess;
                     } else {
                         return 0; // this == received
@@ -132,7 +130,7 @@ public class SnoRel implements Comparable<Object> {
                 }
             }
         }
-    } // SnoRel.compareTo()
+    } // Relationship.compareTo()
 
     /* (non-Javadoc)
      * @see java.lang.Object#toString()
@@ -140,11 +138,11 @@ public class SnoRel implements Comparable<Object> {
     @Override
     public String toString() {
         StringBuilder sb = new StringBuilder();
-        sb.append(c1Id);
+        sb.append(sourceId);
         sb.append(": ");
         sb.append(typeId);
         sb.append(": ");
-        sb.append(c2Id);
+        sb.append(destinationId);
         return sb.toString();
     }
 
@@ -155,7 +153,7 @@ public class SnoRel implements Comparable<Object> {
      */
     public String toStringC1() {
        
-        return Integer.toString(c1Id);
+        return Integer.toString(sourceId);
     }
 
     /**
@@ -175,7 +173,7 @@ public class SnoRel implements Comparable<Object> {
      */
     public String toStringC2() {
        
-        return Integer.toString(c2Id);
+        return Integer.toString(destinationId);
     }
 
     /**
@@ -194,7 +192,7 @@ public class SnoRel implements Comparable<Object> {
      * @return the string
      */
     public String toString4File() {
-        return "relId     \t" + "c1Id      \t" + "c2Id      \t" + "typeId    \t" + "group";
+        return "relId     \t" + "sourceId      \t" + "destinationId      \t" + "typeId    \t" + "group";
     }
 
     /**
@@ -204,14 +202,14 @@ public class SnoRel implements Comparable<Object> {
      * @param fName the f name
      * @param format the format
      */
-    public static void dumpToFile(List<SnoRel> srl, String fName, int format) {
+    public static void dumpToFile(List<Relationship> srl, String fName, int format) {
 
         try {
 
             BufferedWriter bw = new BufferedWriter(new FileWriter(fName));
             if (format == 1) { // RAW NIDs
-                for (SnoRel sr : srl) {
-                    bw.write(sr.c1Id + "\t" + sr.typeId + "\t" + sr.c2Id + "\t" + sr.group + "\r\n");
+                for (Relationship sr : srl) {
+                    bw.write(sr.sourceId + "\t" + sr.typeId + "\t" + sr.destinationId + "\t" + sr.group + "\r\n");
                 }
             }
             
@@ -220,10 +218,10 @@ public class SnoRel implements Comparable<Object> {
                 bw.write("RELATIONSHIPID\t" + "CONCEPTID1\t" + "RELATIONSHIPTYPE\t"
                         + "CONCEPTID2\t" + "CHARACTERISTICTYPE\t" + "REFINABILITY\t"
                         + "RELATIONSHIPGROUP\r\n");
-                for (SnoRel sr : srl) {
+                for (Relationship sr : srl) {
                     // RELATIONSHIPID + CONCEPTID1 + RELATIONSHIPTYPE +
                     // CONCEPTID2
-                    bw.write("#" + index + "\t" + sr.c1Id + "\t" + sr.typeId + "\t" + sr.c2Id
+                    bw.write("#" + index + "\t" + sr.sourceId + "\t" + sr.typeId + "\t" + sr.destinationId
                             + "\t");
                     // CHARACTERISTICTYPE + REFINABILITY + RELATIONSHIPGROUP
                     bw.write("NA\t" + "NA\t" + sr.group + "\r\n");
@@ -235,9 +233,9 @@ public class SnoRel implements Comparable<Object> {
         
         } catch (IOException e) {
             // can be caused by new FileWriter
-            Logger.getLogger(SnoRel.class.getName()).log(Level.SEVERE, null, e);
+            Logger.getLogger(Relationship.class.getName()).log(Level.SEVERE, null, e);
         }
     }
-} // class SnoRel
+} // class Relationship
 
 

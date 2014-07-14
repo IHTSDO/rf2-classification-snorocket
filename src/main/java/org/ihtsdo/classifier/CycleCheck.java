@@ -69,7 +69,7 @@ public class CycleCheck {
 	/** The reviewed. */
 	private int reviewed;
 
-	private File paramFile;
+	private File config;
 
 	private XMLConfiguration xmlConfig;
 
@@ -93,8 +93,8 @@ public class CycleCheck {
 		this.outputFile = outputFile;
 	}
 
-	public CycleCheck(File paramFile) throws ConfigurationException {
-		this.paramFile=paramFile;
+	public CycleCheck(File config) throws ConfigurationException {
+		this.config=config;
 
 		logger = Logger.getLogger("org.ihtsdo.classifier.CycleCheck");
 		getParams();
@@ -103,7 +103,7 @@ public class CycleCheck {
 	private void getParams() throws ConfigurationException {
 
 		try {
-			xmlConfig=new XMLConfiguration(paramFile);
+			xmlConfig=new XMLConfiguration(config);
 		} catch (ConfigurationException e) {
 			logger.info("CycleCheck - Error happened getting params file." + e.getMessage());
 			throw e;

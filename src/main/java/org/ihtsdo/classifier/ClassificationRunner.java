@@ -35,13 +35,8 @@ import java.util.List;
 import org.apache.commons.configuration.ConfigurationException;
 import org.apache.commons.configuration.XMLConfiguration;
 import org.apache.log4j.Logger;
-import org.ihtsdo.classifier.model.EquivConcept;
-import org.ihtsdo.classifier.model.SnoCon;
-import org.ihtsdo.classifier.model.SnoConGrp;
-import org.ihtsdo.classifier.model.SnoConStringID;
-import org.ihtsdo.classifier.model.SnoGrp;
-import org.ihtsdo.classifier.model.SnoGrpList;
-import org.ihtsdo.classifier.model.SnoRel;
+import org.ihtsdo.classifier.model.*;
+import org.ihtsdo.classifier.model.EquivalentClasses;
 import org.ihtsdo.classifier.utils.GetDescendants;
 import org.ihtsdo.classifier.utils.I_Constants;
 
@@ -61,12 +56,12 @@ import au.csiro.snorocket.snapi.Snorocket_123;
 public class ClassificationRunner {
 
 	/** The prev inferred rels. */
-	private String prevInferredRels;
+	private String previousInferredRelationships;
 	
 	/** The output tmp. */
-	private File outputTmp;
+	private File tempRelationshipStore;
 
-	private File paramFile;
+	private File config;
 
 	/**
 	 * Instantiates a new classification runner.
@@ -74,13 +69,13 @@ public class ClassificationRunner {
 	 * @param module the module
 	 * @param releaseDate the release date
 	 * @param concepts the concepts
-	 * @param statedRels the stated rels
-	 * @param prevInferredRels the prev inferred rels
-	 * @param outputRels the output rels
-	 * @param equivConceptFile the equiv concept file
+	 * @param statedRelationships the stated rels
+	 * @param previousInferredRelationships the prev inferred rels
+	 * @param newInferredRelationships the output rels
+	 * @param equivalencyReport the equiv concept file
 	 */
 	public ClassificationRunner(String module, String releaseDate, String concepts,
-			String statedRels,String prevInferredRels, String outputRels, String equivConceptFile) {
+			String statedRelationships,String previousInferredRelationships, String newInferredRelationships, String equivalencyReport) {
 		super();
 
 		logger = Logger.getLogger("org.ihtsdo.classifier.ClassificationRunner");
@@ -88,32 +83,32 @@ public class ClassificationRunner {
 		this.module = module;
 		this.releaseDate = releaseDate;
 		this.concepts = concepts;
-		this.statedRels = statedRels;
-		this.outputRels = outputRels;
-		this.equivConceptFile = equivConceptFile;
-		this.prevInferredRels = prevInferredRels;
+		this.statedRelationships = statedRelationships;
+		this.newInferredRelationships = newInferredRelationships;
+		this.equivalencyReport = equivalencyReport;
+		this.previousInferredRelationships = previousInferredRelationships;
 
-		File outputFile=new File(outputRels);
-		outputTmp=new File(outputFile.getParentFile(),"Tmp_" + outputFile.getName());
+		File outputFile=new File(newInferredRelationships);
+		tempRelationshipStore=new File(outputFile.getParentFile(),"Tmp_" + outputFile.getName());
 	}
 
-	public ClassificationRunner(File paramFile) throws ConfigurationException {
-		this.paramFile=paramFile;
+	public ClassificationRunner(File config) throws ConfigurationException {
+		this.config=config;
 
 		logger = Logger.getLogger("org.ihtsdo.classifier.ClassificationRunner");
 		
 		getParams();
 
-		File outputFile=new File(outputRels);
-		outputTmp=new File(outputFile.getParentFile(),"Tmp_" + outputFile.getName());
+		File outputFile=new File(newInferredRelationships);
+		tempRelationshipStore=new File(outputFile.getParentFile(),"Tmp_" + outputFile.getName());
 		
 	}
 
 	/** The edited snomed concepts. */
-	private  ArrayList<SnoConStringID> cEditSnoCons;
+	private  ArrayList<StringIDConcept> cEditSnoCons;
 	
 	/** The edit snomed rels. */
-	private  ArrayList<SnoRel> cEditSnoRels;
+	private  ArrayList<Relationship> cEditRelationships;
 	
 	/** The con ref list. */
 	private  HashMap<Integer, String> conRefList;
@@ -125,7 +120,7 @@ public class ClassificationRunner {
 	private  Logger logger;
 	
 	/** The c rocket sno rels. */
-	private  ArrayList<SnoRel> cRocketSnoRels;
+	private  ArrayList<Relationship> cRocketRelationships;
 	
 	/** The isa. */
 	private  Integer isa;
@@ -144,13 +139,13 @@ public class ClassificationRunner {
 	private  String concepts;
 	
 	/** The stated rels. */
-	private  String statedRels;
+	private  String statedRelationships;
 	
 	/** The output rels. */
-	private  String outputRels;
+	private  String newInferredRelationships;
 	
 	/** The equiv concept file. */
-	private  String equivConceptFile;
+	private  String equivalencyReport;
 	
 	/** The retired set. */
 	private HashSet<String> retiredSet;
@@ -165,8 +160,8 @@ public class ClassificationRunner {
 		try {
 
 			logger.info("\r\n::: [Test Snorocket] execute() -- begin");
-			cEditSnoCons = new ArrayList<SnoConStringID>();
-			cEditSnoRels = new ArrayList<SnoRel>();
+			cEditSnoCons = new ArrayList<StringIDConcept>();
+			cEditRelationships = new ArrayList<Relationship>();
 			conRefList=new HashMap<Integer,String>();
 			conStrList=new HashMap<String,Integer>();
 
@@ -175,7 +170,7 @@ public class ClassificationRunner {
 
 			HashSet<String>parentConcepts=new HashSet<String>();
 			parentConcepts.add(I_Constants.ATTRIBUTE_ROOT_CONCEPT); //concept model attribute
-			File relationshipFile=new File(statedRels);
+			File relationshipFile=new File(statedRelationships);
 			int[] roles =getRoles(parentConcepts,relationshipFile); 
 			int ridx = roles.length;
 			if (roles.length > 100) {
@@ -195,7 +190,7 @@ public class ClassificationRunner {
 			if (cEditSnoCons.get(0).id <= Integer.MIN_VALUE + reserved) {
 				throw new Exception("::: SNOROCKET: TOP & BOTTOM nids NOT reserved");
 			}
-			for (SnoCon sc : cEditSnoCons) {
+			for (Concept sc : cEditSnoCons) {
 				intArray[cidx++] = sc.id;
 			}
 			// Fill array to make binary search work correctly.
@@ -221,11 +216,11 @@ public class ClassificationRunner {
 			}
 			cEditSnoCons = null; // :MEMORY:
 
-			loadRelationshipFilesTomap(statedRels);
+			loadRelationshipFilesTomap(statedRelationships);
 			// ADD RELATIONSHIPS
-			Collections.sort(cEditSnoRels);
-			for (SnoRel sr : cEditSnoRels) {
-				int err = rocket_123.addRelationship(sr.c1Id, sr.typeId, sr.c2Id, sr.group);
+			Collections.sort(cEditRelationships);
+			for (Relationship sr : cEditRelationships) {
+				int err = rocket_123.addRelationship(sr.sourceId, sr.typeId, sr.destinationId, sr.group);
 				if (err > 0) {
 					StringBuilder sb = new StringBuilder();
 					if ((err & 1) == 1) {
@@ -241,7 +236,7 @@ public class ClassificationRunner {
 				}
 			}
 
-			cEditSnoRels = null; // :MEMORY:
+			cEditRelationships = null; // :MEMORY:
 
 			conStrList = null; // :MEMORY:
 			System.gc();
@@ -259,14 +254,14 @@ public class ClassificationRunner {
 			rocket_123.getEquivalents(pe);
 			logger.info("\r\n::: [SnorocketMojo] ProcessEquiv() count=" + pe.countConSet
 					+ " time= " + toStringLapseSec(startTime));
-			pe.getEquivConcept();
-			EquivConcept.writeEquivConcept(pe.getEquivConcept(), equivConceptFile);
+			pe.getEquivalentClasses();
+			EquivalentClasses.writeEquivConcept(pe.getEquivalentClasses(), equivalencyReport);
 
 			// GET CLASSIFER RESULTS
-			cRocketSnoRels = new ArrayList<SnoRel>();
+			cRocketRelationships = new ArrayList<Relationship>();
 			logger.info("::: GET CLASSIFIER RESULTS...");
 			startTime = System.currentTimeMillis();
-			ProcessResults pr = new ProcessResults(cRocketSnoRels);
+			ProcessResults pr = new ProcessResults(cRocketRelationships);
 			rocket_123.getDistributionFormRelationships(pr);
 			logger.info("\r\n::: [SnorocketMojo] GET CLASSIFIER RESULTS count=" + pr.countRel
 					+ " time= " + toStringLapseSec(startTime));
@@ -278,33 +273,33 @@ public class ClassificationRunner {
 
 			// GET CLASSIFIER_PATH RELS
 			startTime = System.currentTimeMillis();
-			cEditSnoRels = new ArrayList<SnoRel>();
+			cEditRelationships = new ArrayList<Relationship>();
 
-			cEditSnoCons = new ArrayList<SnoConStringID>();
+			cEditSnoCons = new ArrayList<StringIDConcept>();
 			conRefList=new HashMap<Integer,String>();
 			conStrList=new HashMap<String,Integer>();
 			loadConceptFilesTomap(concepts,true);
 			cEditSnoCons=null;
-			if (prevInferredRels!=null){
-				loadRelationshipFilesTomap(prevInferredRels);
+			if (previousInferredRelationships!=null){
+				loadRelationshipFilesTomap(previousInferredRelationships);
 			}
 			conStrList=null;
 			// FILTER RELATIONSHIPS
-			//			int last = cEditSnoRels.size();
+			//			int last = cEditRelationships.size();
 			//			for (int idx = last - 1; idx > -1; idx--) {
-			//				if (Arrays.binarySearch(intArray, cEditSnoRels.get(idx).c2Id) < 0) {
-			//					cEditSnoRels.remove(idx);
+			//				if (Arrays.binarySearch(intArray, cEditRelationships.get(idx).destinationId) < 0) {
+			//					cEditRelationships.remove(idx);
 			//				}
 			//			}
 
 
 			// WRITEBACK RESULTS
 			startTime = System.currentTimeMillis();
-			if (prevInferredRels==null){
-				writeInferredRel( cRocketSnoRels);
+			if (previousInferredRelationships==null){
+				writeInferredRel(cRocketRelationships);
 			}else{
 
-				logger.info(compareAndWriteBack(cEditSnoRels, cRocketSnoRels));
+				logger.info(compareAndWriteBack(cEditRelationships, cRocketRelationships));
 
 				logger.info("\r\n::: *** WRITEBACK *** LAPSED TIME =\t" + toStringLapseSec(startTime) + "\t ***");
 
@@ -326,11 +321,11 @@ public class ClassificationRunner {
 	 */
 	private void consolidateRels() throws Exception {
 
-		FileOutputStream fos = new FileOutputStream( outputRels);
+		FileOutputStream fos = new FileOutputStream( newInferredRelationships);
 		OutputStreamWriter osw = new OutputStreamWriter(fos,"UTF-8");
 		BufferedWriter bw = new BufferedWriter(osw);
 
-		FileInputStream rfis = new FileInputStream(outputTmp);
+		FileInputStream rfis = new FileInputStream(tempRelationshipStore);
 		InputStreamReader risr = new InputStreamReader(rfis,"UTF-8");
 		BufferedReader rbr = new BufferedReader(risr);
 
@@ -344,7 +339,7 @@ public class ClassificationRunner {
 		rfis=null;
 		risr=null;
 
-		rfis = new FileInputStream(prevInferredRels);
+		rfis = new FileInputStream(previousInferredRelationships);
 		risr = new InputStreamReader(rfis,"UTF-8");
 		rbr = new BufferedReader(risr);
 		rbr.readLine();
@@ -363,7 +358,7 @@ public class ClassificationRunner {
 		rbr=null;
 		rfis=null;
 		risr=null;
-//		outputTmp.delete();
+//		tempRelationshipStore.delete();
 	}
 
 	/**
@@ -436,7 +431,7 @@ public class ClassificationRunner {
 				conStrList.put(spl[0],cont);
 
 				definitionStatusId = (spl[4].equals(I_Constants.FULLY_DEFINED));
-				SnoConStringID conStr=new SnoConStringID(cont,spl[0],definitionStatusId);
+				StringIDConcept conStr=new StringIDConcept(cont,spl[0],definitionStatusId);
 				cEditSnoCons.add(conStr);
 				if (mapToModule){
 					if (spl[0].equals(I_Constants.META_SCTID)){
@@ -477,8 +472,8 @@ public class ClassificationRunner {
 				int c2=conStrList.get(spl[5]);
 				int rg=Integer.parseInt(spl[6]);
 				int ty=conStrList.get(spl[7]);
-				SnoRel rel=new SnoRel(c1,c2,ty,rg,spl[0]);
-				cEditSnoRels.add(rel);
+				Relationship rel=new Relationship(c1,c2,ty,rg,spl[0]);
+				cEditRelationships.add(rel);
 			}
 		}
 		rbr.close();
@@ -491,7 +486,7 @@ public class ClassificationRunner {
 	private class ProcessResults implements I_Callback {
 
 		/** The snorels. */
-		private List<SnoRel> snorels;
+		private List<Relationship> snorels;
 		
 		/** The count rel. */
 		private int countRel = 0; // STATISTICS COUNTER
@@ -501,7 +496,7 @@ public class ClassificationRunner {
 		 *
 		 * @param snorels the snorels
 		 */
-		public ProcessResults(List<SnoRel> snorels) {
+		public ProcessResults(List<Relationship> snorels) {
 			this.snorels = snorels;
 			this.countRel = 0;
 		}
@@ -511,7 +506,7 @@ public class ClassificationRunner {
 		 */
 		public void addRelationship(int conceptId1, int roleId, int conceptId2, int group) {
 			countRel++;
-			SnoRel relationship = new SnoRel(conceptId1, conceptId2, roleId, group);
+			Relationship relationship = new Relationship(conceptId1, conceptId2, roleId, group);
 			snorels.add(relationship);
 			if (countRel % 25000 == 0) {
 				// ** GUI: ProcessResults
@@ -529,20 +524,20 @@ public class ClassificationRunner {
 		private int countConSet = 0; // STATISTICS COUNTER
 		
 		/** The equiv concept. */
-		private EquivConcept equivConcept;
+		private EquivalentClasses equivalentClasses;
 
 		/**
 		 * Instantiates a new process equiv.
 		 */
 		public ProcessEquiv() {
-			equivConcept=new EquivConcept();
+			equivalentClasses =new EquivalentClasses();
 		}
 
 		/* (non-Javadoc)
 		 * @see au.csiro.snorocket.snapi.I_Snorocket_123.I_EquivalentCallback#equivalent(java.util.ArrayList)
 		 */
 		public void equivalent(ArrayList<Integer> equivalentConcepts) {
-			equivConcept.add(new SnoConGrp(equivalentConcepts));
+			equivalentClasses.add(new ConceptGroup(equivalentConcepts));
 			countConSet += 1;
 		}
 
@@ -551,8 +546,8 @@ public class ClassificationRunner {
 		 *
 		 * @return the equiv concept
 		 */
-		public EquivConcept getEquivConcept() {
-			return equivConcept;
+		public EquivalentClasses getEquivalentClasses() {
+			return equivalentClasses;
 		}
 	}
 
@@ -562,13 +557,13 @@ public class ClassificationRunner {
 	 * @param infRels the inf rels
 	 * @throws java.io.IOException Signals that an I/O exception has occurred.
 	 */
-	private  void writeInferredRel( List<SnoRel> infRels)
+	private  void writeInferredRel( List<Relationship> infRels)
 			throws IOException {
 
 		// STATISTICS COUNTERS
 		int countConSeen = 0;
 
-		FileOutputStream fos = new FileOutputStream( outputRels);
+		FileOutputStream fos = new FileOutputStream( newInferredRelationships);
 		OutputStreamWriter osw = new OutputStreamWriter(fos,"UTF-8");
 		BufferedWriter bw = new BufferedWriter(osw);
 
@@ -596,9 +591,9 @@ public class ClassificationRunner {
 		Collections.sort(infRels);
 
 		// Typically, B is the SnoRocket Results Set (for newly inferred)
-		Iterator<SnoRel> itRel = infRels.iterator();
+		Iterator<Relationship> itRel = infRels.iterator();
 
-		SnoRel infRel = null;
+		Relationship infRel = null;
 		boolean done = false;
 		if (itRel.hasNext()) {
 			infRel = itRel.next();
@@ -634,14 +629,14 @@ public class ClassificationRunner {
 	 * @param infRel the inf rel
 	 * @throws java.io.IOException Signals that an I/O exception has occurred.
 	 */
-	private  void writeRel(BufferedWriter bw,SnoRel infRel)
+	private  void writeRel(BufferedWriter bw,Relationship infRel)
 			throws  IOException {
-		String moduleC1=conceptModule.get(infRel.c1Id);
+		String moduleC1=conceptModule.get(infRel.sourceId);
 		if (moduleC1==null){
 			moduleC1=module;
 		}
-		writeRF2TypeLine(bw,"null",releaseDate,"1",moduleC1,conRefList.get(infRel.c1Id),
-				conRefList.get(infRel.c2Id),infRel.group,conRefList.get(infRel.typeId),
+		writeRF2TypeLine(bw,"null",releaseDate,"1",moduleC1,conRefList.get(infRel.sourceId),
+				conRefList.get(infRel.destinationId),infRel.group,conRefList.get(infRel.typeId),
 				I_Constants.INFERRED, I_Constants.SOMEMODIFIER);
 
 	}
@@ -677,7 +672,7 @@ public class ClassificationRunner {
 	 * @return the string
 	 * @throws java.io.IOException Signals that an I/O exception has occurred.
 	 */
-	private  String compareAndWriteBack(List<SnoRel> snorelA, List<SnoRel> snorelB)
+	private  String compareAndWriteBack(List<Relationship> snorelA, List<Relationship> snorelB)
 			throws  IOException {
 
 		retiredSet=new HashSet<String>();
@@ -691,7 +686,7 @@ public class ClassificationRunner {
 		int countB_Diff = 0;
 		int countB_DiffISA = 0;
 		int countB_Total = 0;
-		FileOutputStream fos = new FileOutputStream( outputTmp);
+		FileOutputStream fos = new FileOutputStream( tempRelationshipStore);
 		OutputStreamWriter osw = new OutputStreamWriter(fos,"UTF-8");
 		BufferedWriter bw = new BufferedWriter(osw);
 
@@ -723,16 +718,16 @@ public class ClassificationRunner {
 
 		// Typically, A is the Classifier Path (for previously inferred)
 		// Typically, B is the SnoRocket Results Set (for newly inferred)
-		Iterator<SnoRel> itA = snorelA.iterator();
-		Iterator<SnoRel> itB = snorelB.iterator();
-		SnoRel rel_A = null;
+		Iterator<Relationship> itA = snorelA.iterator();
+		Iterator<Relationship> itB = snorelB.iterator();
+		Relationship rel_A = null;
 		boolean done_A = false;
 		if (itA.hasNext()) {
 			rel_A = itA.next();
 		} else {
 			done_A = true;
 		}
-		SnoRel rel_B = null;
+		Relationship rel_B = null;
 		boolean done_B = false;
 		if (itB.hasNext()) {
 			rel_B = itB.next();
@@ -750,13 +745,13 @@ public class ClassificationRunner {
 				logger.info("::: [SnorocketMojo] compareAndWriteBack @ #\t" + countConSeen);
 			}
 
-			if (rel_A.c1Id == rel_B.c1Id) {
+			if (rel_A.sourceId == rel_B.sourceId) {
 				// COMPLETELY PROCESS ALL C1 FOR BOTH IN & OUT
 				// PROCESS C1 WITH GROUP == 0
-				int thisC1 = rel_A.c1Id;
+				int thisC1 = rel_A.sourceId;
 
 				// PROCESS WHILE BOTH HAVE GROUP 0
-				while (rel_A.c1Id == thisC1 && rel_B.c1Id == thisC1 && rel_A.group == 0
+				while (rel_A.sourceId == thisC1 && rel_B.sourceId == thisC1 && rel_A.group == 0
 						&& rel_B.group == 0 && !done_A && !done_B) {
 
 					// PROGESS GROUP ZERO
@@ -818,7 +813,7 @@ public class ClassificationRunner {
 				}
 
 				// REMAINDER LIST_A GROUP 0 FOR C1
-				while (rel_A.c1Id == thisC1 && rel_A.group == 0 && !done_A) {
+				while (rel_A.sourceId == thisC1 && rel_A.group == 0 && !done_A) {
 
 					countA_Diff++;
 					countA_Total++;
@@ -835,7 +830,7 @@ public class ClassificationRunner {
 				}
 
 				// REMAINDER LIST_B GROUP 0 FOR C1
-				while (rel_B.c1Id == thisC1 && rel_B.group == 0 && !done_B) {
+				while (rel_B.sourceId == thisC1 && rel_B.group == 0 && !done_B) {
 					countB_Diff++;
 					countB_Total++;
 					if (rel_B.typeId == isa) {
@@ -851,16 +846,16 @@ public class ClassificationRunner {
 				}
 
 				// ** SEGMENT GROUPS **
-				SnoGrpList groupList_A = new SnoGrpList();
-				SnoGrpList groupList_B = new SnoGrpList();
-				SnoGrp groupA = null;
-				SnoGrp groupB = null;
+				RelationshipGroupList groupList_A = new RelationshipGroupList();
+				RelationshipGroupList groupList_B = new RelationshipGroupList();
+				RelationshipGroup groupA = null;
+				RelationshipGroup groupB = null;
 
 				// SEGMENT GROUPS IN LIST_A
 				int prevGroup = Integer.MIN_VALUE;
-				while (rel_A.c1Id == thisC1 && !done_A) {
+				while (rel_A.sourceId == thisC1 && !done_A) {
 					if (rel_A.group != prevGroup) {
-						groupA = new SnoGrp();
+						groupA = new RelationshipGroup();
 						groupList_A.add(groupA);
 					}
 
@@ -875,9 +870,9 @@ public class ClassificationRunner {
 				}
 				// SEGMENT GROUPS IN LIST_B
 				prevGroup = Integer.MIN_VALUE;
-				while (rel_B.c1Id == thisC1 && !done_B) {
+				while (rel_B.sourceId == thisC1 && !done_B) {
 					if (rel_B.group != prevGroup) {
-						groupB = new SnoGrp();
+						groupB = new RelationshipGroup();
 						groupList_B.add(groupB);
 					}
 
@@ -893,11 +888,11 @@ public class ClassificationRunner {
 
 				// FIND GROUPS IN GROUPLIST_A WITHOUT AN EQUAL IN GROUPLIST_B
 				// WRITE THESE GROUPED RELS AS "RETIRED"
-				SnoGrpList groupList_NotEqual;
+				RelationshipGroupList groupList_NotEqual;
 				if (groupList_A.size() > 0) {
 					groupList_NotEqual = groupList_A.whichNotEqual(groupList_B);
-					for (SnoGrp sg : groupList_NotEqual) {
-						for (SnoRel sr_A : sg) {
+					for (RelationshipGroup sg : groupList_NotEqual) {
+						for (Relationship sr_A : sg) {
 							writeBackRetired(bw,sr_A);
 						}
 					}
@@ -910,15 +905,15 @@ public class ClassificationRunner {
 				int rgNum = 0; // USED TO DETERMINE "AVAILABLE" ROLE GROUP NUMBERS
 				if (groupList_B.size() > 0) {
 					groupList_NotEqual = groupList_B.whichNotEqual(groupList_A);
-					for (SnoGrp sg : groupList_NotEqual) {
+					for (RelationshipGroup sg : groupList_NotEqual) {
 						if (sg.get(0).group != 0) {
 							rgNum = nextRoleGroupNumber(groupList_A, rgNum);
-							for (SnoRel sr_B : sg) {
+							for (Relationship sr_B : sg) {
 								sr_B.group = rgNum;
 								writeRel(bw,sr_B);
 							}
 						} else {
-							for (SnoRel sr_B : sg) {
+							for (Relationship sr_B : sg) {
 								writeRel(bw,sr_B);
 							}
 						}
@@ -926,11 +921,11 @@ public class ClassificationRunner {
 					countB_Total += groupList_A.countRels();
 					countB_Diff += groupList_NotEqual.countRels();
 				}
-			} else if (rel_A.c1Id > rel_B.c1Id) {
+			} else if (rel_A.sourceId > rel_B.sourceId) {
 				// CASE 2: LIST_B HAS CONCEPT NOT IN LIST_A
 				// COMPLETELY *ADD* ALL THIS C1 FOR REL_B AS NEW, CURRENT
-				int thisC1 = rel_B.c1Id;
-				while (rel_B.c1Id == thisC1) {
+				int thisC1 = rel_B.sourceId;
+				while (rel_B.sourceId == thisC1) {
 					countB_Diff++;
 					countB_Total++;
 					if (rel_B.typeId == isa) {
@@ -948,8 +943,8 @@ public class ClassificationRunner {
 			} else {
 				// CASE 3: LIST_A HAS CONCEPT NOT IN LIST_B
 				// COMPLETELY *RETIRE* ALL THIS C1 FOR REL_A
-				int thisC1 = rel_A.c1Id;
-				while (rel_A.c1Id == thisC1) {
+				int thisC1 = rel_A.sourceId;
+				while (rel_A.sourceId == thisC1) {
 					countA_Diff++;
 					countA_Total++;
 					if (rel_A.typeId == isa) {
@@ -1041,12 +1036,12 @@ public class ClassificationRunner {
 	 * @param rel_A the rel_ a
 	 * @throws java.io.IOException Signals that an I/O exception has occurred.
 	 */
-	private  void writeBackRetired(BufferedWriter bw,SnoRel rel_A)
+	private  void writeBackRetired(BufferedWriter bw,Relationship rel_A)
 			throws IOException {
 
 		retiredSet.add(rel_A.getRelId());
-		writeRF2TypeLine(bw,rel_A.getRelId(),releaseDate,"0",module,conRefList.get(rel_A.c1Id),
-				conRefList.get(rel_A.c2Id),rel_A.group,conRefList.get(rel_A.typeId),
+		writeRF2TypeLine(bw,rel_A.getRelId(),releaseDate,"0",module,conRefList.get(rel_A.sourceId),
+				conRefList.get(rel_A.destinationId),rel_A.group,conRefList.get(rel_A.typeId),
 				I_Constants.INFERRED, I_Constants.SOMEMODIFIER);
 
 
@@ -1059,19 +1054,19 @@ public class ClassificationRunner {
 	 * @param outR the out r
 	 * @return the int
 	 */
-	private static int compareSnoRel(SnoRel inR, SnoRel outR) {
-		if ((inR.c1Id == outR.c1Id) && (inR.group == outR.group) && (inR.typeId == outR.typeId)
-				&& (inR.c2Id == outR.c2Id)) {
+	private static int compareSnoRel(Relationship inR, Relationship outR) {
+		if ((inR.sourceId == outR.sourceId) && (inR.group == outR.group) && (inR.typeId == outR.typeId)
+				&& (inR.destinationId == outR.destinationId)) {
 			return 1; // SAME
-		} else if (inR.c1Id > outR.c1Id) {
+		} else if (inR.sourceId > outR.sourceId) {
 			return 2; // ADDED
-		} else if ((inR.c1Id == outR.c1Id) && (inR.group > outR.group)) {
+		} else if ((inR.sourceId == outR.sourceId) && (inR.group > outR.group)) {
 			return 2; // ADDED
-		} else if ((inR.c1Id == outR.c1Id) && (inR.group == outR.group)
+		} else if ((inR.sourceId == outR.sourceId) && (inR.group == outR.group)
 				&& (inR.typeId > outR.typeId)) {
 			return 2; // ADDED
-		} else if ((inR.c1Id == outR.c1Id) && (inR.group == outR.group)
-				&& (inR.typeId == outR.typeId) && (inR.c2Id > outR.c2Id)) {
+		} else if ((inR.sourceId == outR.sourceId) && (inR.group == outR.group)
+				&& (inR.typeId == outR.typeId) && (inR.destinationId > outR.destinationId)) {
 			return 2; // ADDED
 		} else {
 			return 3; // DROPPED
@@ -1085,7 +1080,7 @@ public class ClassificationRunner {
 	 * @param gnum the gnum
 	 * @return the int
 	 */
-	private static int nextRoleGroupNumber(SnoGrpList sgl, int gnum) {
+	private static int nextRoleGroupNumber(RelationshipGroupList sgl, int gnum) {
 
 		int testNum = gnum + 1;
 		int sglSize = sgl.size();
@@ -1113,7 +1108,7 @@ public class ClassificationRunner {
 	private void getParams() throws ConfigurationException  {
 
 		try {
-			xmlConfig=new XMLConfiguration(paramFile);
+			xmlConfig=new XMLConfiguration(config);
 		} catch (ConfigurationException e) {
 			logger.info("ClassificationRunner - Error happened getting params file." + e.getMessage());
 			throw e;
@@ -1122,20 +1117,20 @@ public class ClassificationRunner {
 		this.module = xmlConfig.getString(I_Constants.MODULEID);
 		this.releaseDate=xmlConfig.getString(I_Constants.RELEASEDATE);
 		this.concepts = xmlConfig.getString(I_Constants.CONCEPT_SNAPSHOT_FILE);
-		this.statedRels=xmlConfig.getString(I_Constants.RELATIONSHIP_SNAPSHOT_FILE);
-		this.equivConceptFile=xmlConfig.getString(I_Constants.EQUIVALENT_CONCEPTS_OUTPUT_FILE);
-		this.prevInferredRels=xmlConfig.getString(I_Constants.PREVIOUS_INFERRED_RELATIONSHIP_FILE);
-		this.outputRels=xmlConfig.getString(I_Constants.INFERRED_RELATIONSHIPS_OUTPUT_FILE);
+		this.statedRelationships=xmlConfig.getString(I_Constants.RELATIONSHIP_SNAPSHOT_FILE);
+		this.equivalencyReport=xmlConfig.getString(I_Constants.EQUIVALENT_CONCEPTS_OUTPUT_FILE);
+		this.previousInferredRelationships=xmlConfig.getString(I_Constants.PREVIOUS_INFERRED_RELATIONSHIP_FILE);
+		this.newInferredRelationships=xmlConfig.getString(I_Constants.INFERRED_RELATIONSHIPS_OUTPUT_FILE);
 		
 		
 		logger.info("Classification - Parameters:");
 		logger.info("Module = " + module);
 		logger.info("Release date = " + releaseDate);
 		logger.info("Concept file = " + concepts);
-		logger.info("Relationship file = " + statedRels);
-		logger.info("Equivalent Concept Output file = " + equivConceptFile);
-		logger.info("Previous Inferred Relationship file = " + prevInferredRels);
-		logger.info("Inferred Relationship Output file = " + outputRels);
+		logger.info("Relationship file = " + statedRelationships);
+		logger.info("Equivalent Concept Output file = " + equivalencyReport);
+		logger.info("Previous Inferred Relationship file = " + previousInferredRelationships);
+		logger.info("Inferred Relationship Output file = " + newInferredRelationships);
 
 	}
 }
