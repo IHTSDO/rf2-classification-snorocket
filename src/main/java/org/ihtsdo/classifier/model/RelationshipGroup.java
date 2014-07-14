@@ -35,13 +35,12 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
-import java.util.logging.Level;
 
 /**
- * The Class SnoGrp.
+ * The Class RelationshipGroup.
  * Represents a relationships list.
  */
-public class SnoGrp extends ArrayList<SnoRel> {
+public class RelationshipGroup extends ArrayList<Relationship> {
     
     /** The Constant serialVersionUID. */
     private static final long serialVersionUID = 1L;
@@ -55,7 +54,7 @@ public class SnoGrp extends ArrayList<SnoRel> {
      * @param relList the rel list
      * @param needsToBeSorted the needs to be sorted
      */
-    public SnoGrp(List<SnoRel> relList, boolean needsToBeSorted) {
+    public RelationshipGroup(List<Relationship> relList, boolean needsToBeSorted) {
         super();
         // set doSort = true if list not pre-sorted to C1-Group-Type-C2 order
         if (needsToBeSorted)
@@ -69,7 +68,7 @@ public class SnoGrp extends ArrayList<SnoRel> {
      *
      * @param o the o
      */
-    public SnoGrp(SnoRel o) {
+    public RelationshipGroup(Relationship o) {
         super();
         this.add(o); // 
     }
@@ -77,7 +76,7 @@ public class SnoGrp extends ArrayList<SnoRel> {
     /**
      * Instantiates a new sno grp.
      */
-    public SnoGrp() {
+    public RelationshipGroup() {
         super();
     }
 
@@ -87,12 +86,12 @@ public class SnoGrp extends ArrayList<SnoRel> {
      * @param roleGroupB the role group b
      * @return the sno grp
      */
-    public SnoGrp addAllWithSort(SnoGrp roleGroupB) {
+    public RelationshipGroup addAllWithSort(RelationshipGroup roleGroupB) {
 
         this.addAll(roleGroupB);
         // SORT BY [ROLE-C2-GROUP-C2]
-        Comparator<SnoRel> comp = new Comparator<SnoRel>() {
-            public int compare(SnoRel o1, SnoRel o2) {
+        Comparator<Relationship> comp = new Comparator<Relationship>() {
+            public int compare(Relationship o1, Relationship o2) {
                 int thisMore = 1;
                 int thisLess = -1;
                 if (o1.typeId > o2.typeId) {
@@ -120,10 +119,10 @@ public class SnoGrp extends ArrayList<SnoRel> {
      *
      * @return the sno grp
      */
-    public SnoGrp sortByType() {
+    public RelationshipGroup sortByType() {
         // SORT BY [ROLE-C2-GROUP-C2]
-        Comparator<SnoRel> comp = new Comparator<SnoRel>() {
-            public int compare(SnoRel o1, SnoRel o2) {
+        Comparator<Relationship> comp = new Comparator<Relationship>() {
+            public int compare(Relationship o1, Relationship o2) {
                 int thisMore = 1;
                 int thisLess = -1;
                 if (o1.typeId > o2.typeId) {
@@ -155,7 +154,7 @@ public class SnoGrp extends ArrayList<SnoRel> {
      * @param roleGroupB the role group b
      * @return true iff RoleValues match
      */
-    public boolean equals(SnoGrp roleGroupB) {
+    public boolean equals(RelationshipGroup roleGroupB) {
         int sizeA = this.size();
         if (sizeA != roleGroupB.size())
             return false; // trivial case, does not have same number of elements
@@ -184,16 +183,16 @@ public class SnoGrp extends ArrayList<SnoRel> {
      * provide overall computational efficiency.</font>
      *
      * @param groupList_B the group list_ b
-     * @return SnoGrp iff logically equivalent role group found
+     * @return RelationshipGroup iff logically equivalent role group found
      */
-    public SnoGrp findLogicalEquivalent(SnoGrpList groupList_B) {
-        for (SnoGrp snoGrp : groupList_B) {
-            if (this.equals(snoGrp)) {
-                return snoGrp;
+    public RelationshipGroup findLogicalEquivalent(RelationshipGroupList groupList_B) {
+        for (RelationshipGroup relationshipGroup : groupList_B) {
+            if (this.equals(relationshipGroup)) {
+                return relationshipGroup;
             }
         }
         return null;
     }
 
-} // class SnoGrp
+} // class RelationshipGroup
 

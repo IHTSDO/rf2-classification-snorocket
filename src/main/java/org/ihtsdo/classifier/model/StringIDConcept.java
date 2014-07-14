@@ -17,10 +17,10 @@
 package org.ihtsdo.classifier.model;
 
 /**
- * The Class SnoConStringID.
+ * The Class StringIDConcept.
  * Represents an extension for concept, adding stringId, definitionstatus and module.
  */
-public class SnoConStringID extends SnoCon {
+public class StringIDConcept extends Concept {
 
 	/** The string id. */
 	private String stringId;
@@ -32,14 +32,14 @@ public class SnoConStringID extends SnoCon {
 	private boolean definitionStatusId;
 	
 	/**
-	 * Instantiates a new sno con string id.
+	 * Instantiates a new concept string id.
 	 *
 	 * @param id the cont
 	 * @param stringId the string id
 	 * @param definitionStatusId the definition status id
 	 * @param module the module
 	 */
-	public SnoConStringID(int id, String stringId, boolean definitionStatusId, String module) {
+	public StringIDConcept(int id, String stringId, boolean definitionStatusId, String module) {
 		super.id=id;
 		this.stringId=stringId;
 		this.definitionStatusId=definitionStatusId;
@@ -66,13 +66,13 @@ public class SnoConStringID extends SnoCon {
 	}
 
 	/**
-	 * Instantiates a new sno con string id.
+	 * Instantiates a new concept string id.
 	 *
 	 * @param id the id
 	 * @param stringId the string id
 	 * @param isDefined the is defined
 	 */
-	public SnoConStringID(int id,String stringId, boolean isDefined) {
+	public StringIDConcept(int id, String stringId, boolean isDefined) {
 		super(id, isDefined);
 		
 		this.stringId=stringId;

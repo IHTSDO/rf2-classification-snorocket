@@ -22,82 +22,79 @@ import java.util.Collections;
 import java.util.List;
 
 /**
- * The Class SnoConGrp.
- * Represents a concept list
+ * The Class ConceptGroup.
+ * Represents a concept group
  */
-public class SnoConGrp extends ArrayList<SnoCon> {
+public class ConceptGroup extends ArrayList<Concept> {
     
     /** The Constant serialVersionUID. */
     private static final long serialVersionUID = 1L;
 
     /**
-     * Instantiates a new sno con grp.
+     * Instantiates a new concept group.
      *
-     * @param conList the con list
-     * @param needsToBeSorted the needs to be sorted
+     * @param conceptList the concepts list
+     * @param sort true if the list needs to be sorted
      */
-    public SnoConGrp(List<SnoCon> conList, boolean needsToBeSorted) {
+    public ConceptGroup(List<Concept> conceptList, boolean sort) {
         super();
-        // set doSort = true if list not pre-sorted to C1-Group-Type-C2 order
-        if (needsToBeSorted)
-            Collections.sort(conList);
-        this.addAll(conList);
+        if (sort)
+            Collections.sort(conceptList);
+        this.addAll(conceptList);
     }
 
     /**
-     * Instantiates a new sno con grp.
+     * Instantiates a new concept group.
      *
-     * @param concepts the concepts
+     * @param conceptCollection the concepts list a Strings collection
      */
-    public SnoConGrp(Collection<String> concepts) {
+    public ConceptGroup(Collection<String> conceptCollection) {
         super();
-        // :NYI: defined or not_defined is indeterminate coming from classifier
-        // callback.
-        for (String cStr : concepts)
-            this.add(new SnoCon(unwrap(cStr), false));
+        for (String conceptId : conceptCollection)
+            this.add(new Concept(toInteger(conceptId), false));
         Collections.sort(this);
     }
 
     /**
-     * Instantiates a new sno con grp.
+     * Instantiates a new concept group.
      *
-     * @param concepts the concepts
+     * @param concepts the concepts list a Integer Array
      */
-    public SnoConGrp(ArrayList<Integer> concepts) {
+    public ConceptGroup(ArrayList<Integer> concepts) {
         super();
         // :NYI: defined or not_defined is indeterminate coming from classifier
         // callback.
-        for (Integer c : concepts)
-            this.add(new SnoCon(c.intValue(), false));
+        for (Integer concept : concepts)
+            this.add(new Concept(concept.intValue(), false));
         Collections.sort(this);
     }
 
     /**
-     * Instantiates a new sno con grp.
+     * Instantiates a new concept group.
      *
-     * @param o the o
+     * @param concept a concept
      */
-    public SnoConGrp(SnoCon o) {
+    public ConceptGroup(Concept concept) {
         super();
-        this.add(o); // 
+        this.add(concept); //
     }
 
     /**
-     * Instantiates a new sno con grp.
+     * Instantiates a new concept group.
      */
-    public SnoConGrp() {
+    public ConceptGroup() {
         super();
     }
 
     /**
-     * Unwrap.
+     * toInteger. Transforms the String value to Integer
      *
-     * @param id the id
-     * @return the int
+     * @param id the string value
+     * @return the integer value
      */
-    static private int unwrap(final String id) {
+    static private int toInteger(final String id) {
         return Integer.parseInt(String.valueOf(id));
     }
 
-} // class SnoConGrp
+}
 

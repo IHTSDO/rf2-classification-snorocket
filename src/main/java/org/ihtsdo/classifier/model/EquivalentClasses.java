@@ -24,11 +24,11 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 /**
- * The Class EquivConcept.
+ * The Class EquivalentClasses.
  * 
  * This class is responsible to acumulate equivalent concepts.
  */
-public class EquivConcept extends ArrayList<SnoConGrp> {
+public class EquivalentClasses extends ArrayList<ConceptGroup> {
 
 	/** The Constant serialVersionUID. */
 	private static final long serialVersionUID = 1L;
@@ -36,12 +36,12 @@ public class EquivConcept extends ArrayList<SnoConGrp> {
 	/**
 	 * Instantiates a new equiv concept.
 	 */
-	public EquivConcept() {
+	public EquivalentClasses() {
 		super();
 	}
 
 	/**
-	 * Counts total concepts in EquivConcept.
+	 * Counts total concepts in EquivalentClasses.
 	 *
 	 * @return <code><b>int</b></code> - total concepts
 	 */
@@ -58,17 +58,17 @@ public class EquivConcept extends ArrayList<SnoConGrp> {
 	/**
 	 * Write equiv concept.
 	 *
-	 * @param equivConcept the equiv concept
+	 * @param equivalentClasses the equiv concept
 	 * @param fName the f name
 	 */
-	public static void writeEquivConcept(EquivConcept equivConcept, String fName) {
+	public static void writeEquivConcept(EquivalentClasses equivalentClasses, String fName) {
 		BufferedWriter bw = null;
 		try {
 			bw = new BufferedWriter(new FileWriter(fName));
 			// "COMPARE" UUIDs, //NIDs, Initial Text
 			int setNumber = 1;
-			for (SnoConGrp eqc : equivConcept) {
-				for (SnoCon sc : eqc) {
+			for (ConceptGroup eqc : equivalentClasses) {
+				for (Concept sc : eqc) {
 					bw.write(sc.id + "\tset=\t" + setNumber + "\t");
 					bw.write( "\r\n");
 				}
@@ -77,12 +77,12 @@ public class EquivConcept extends ArrayList<SnoConGrp> {
 			bw.flush();
 			bw.close();
 		} catch (IOException ex) {
-			Logger.getLogger(EquivConcept.class.getName()).log(Level.SEVERE, null, ex);
+			Logger.getLogger(EquivalentClasses.class.getName()).log(Level.SEVERE, null, ex);
 		} finally {
 			try {
 				bw.close();
 			} catch (IOException ex) {
-				Logger.getLogger(EquivConcept.class.getName()).log(Level.SEVERE, null, ex);
+				Logger.getLogger(EquivalentClasses.class.getName()).log(Level.SEVERE, null, ex);
 			}
 		}
 	}
