@@ -51,15 +51,15 @@ public class RelationshipGroup extends ArrayList<Relationship> {
     /**
      * Instantiates a new sno grp.
      *
-     * @param relList the rel list
-     * @param needsToBeSorted the needs to be sorted
+     * @param relationships the relationships list
+     * @param sort true if the list needs to be sorted
      */
-    public RelationshipGroup(List<Relationship> relList, boolean needsToBeSorted) {
+    public RelationshipGroup(List<Relationship> relationships, boolean sort) {
         super();
         // set doSort = true if list not pre-sorted to C1-Group-Type-C2 order
-        if (needsToBeSorted)
-            Collections.sort(relList);
-        this.addAll(relList);
+        if (sort)
+            Collections.sort(relationships);
+        this.addAll(relationships);
        
     }
 
@@ -99,9 +99,9 @@ public class RelationshipGroup extends ArrayList<Relationship> {
                 } else if (o1.typeId < o2.typeId) {
                     return thisLess;
                 } else {
-                    if (o1.c2Id > o2.c2Id) {
+                    if (o1.destinationId > o2.destinationId) {
                         return thisMore;
-                    } else if (o1.c2Id < o2.c2Id) {
+                    } else if (o1.destinationId < o2.destinationId) {
                         return thisLess;
                     } else {
                         return 0; // EQUAL
@@ -130,9 +130,9 @@ public class RelationshipGroup extends ArrayList<Relationship> {
                 } else if (o1.typeId < o2.typeId) {
                     return thisLess;
                 } else {
-                    if (o1.c2Id > o2.c2Id) {
+                    if (o1.destinationId > o2.destinationId) {
                         return thisMore;
-                    } else if (o1.c2Id < o2.c2Id) {
+                    } else if (o1.destinationId < o2.destinationId) {
                         return thisLess;
                     } else {
                         return 0; // EQUAL
@@ -165,7 +165,7 @@ public class RelationshipGroup extends ArrayList<Relationship> {
         int i = 0;
         boolean isSame = true;
         while (i < sizeA) {
-            if (this.get(i).typeId != roleGroupB.get(i).typeId || this.get(i).c2Id != roleGroupB.get(i).c2Id) {
+            if (this.get(i).typeId != roleGroupB.get(i).typeId || this.get(i).destinationId != roleGroupB.get(i).destinationId) {
                 isSame = false;
                 break;
             }

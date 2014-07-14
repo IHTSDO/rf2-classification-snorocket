@@ -220,7 +220,7 @@ public class ClassificationRunner {
 			// ADD RELATIONSHIPS
 			Collections.sort(cEditRelationships);
 			for (Relationship sr : cEditRelationships) {
-				int err = rocket_123.addRelationship(sr.c1Id, sr.typeId, sr.c2Id, sr.group);
+				int err = rocket_123.addRelationship(sr.sourceId, sr.typeId, sr.destinationId, sr.group);
 				if (err > 0) {
 					StringBuilder sb = new StringBuilder();
 					if ((err & 1) == 1) {
@@ -287,7 +287,7 @@ public class ClassificationRunner {
 			// FILTER RELATIONSHIPS
 			//			int last = cEditRelationships.size();
 			//			for (int idx = last - 1; idx > -1; idx--) {
-			//				if (Arrays.binarySearch(intArray, cEditRelationships.get(idx).c2Id) < 0) {
+			//				if (Arrays.binarySearch(intArray, cEditRelationships.get(idx).destinationId) < 0) {
 			//					cEditRelationships.remove(idx);
 			//				}
 			//			}
@@ -631,12 +631,12 @@ public class ClassificationRunner {
 	 */
 	private  void writeRel(BufferedWriter bw,Relationship infRel)
 			throws  IOException {
-		String moduleC1=conceptModule.get(infRel.c1Id);
+		String moduleC1=conceptModule.get(infRel.sourceId);
 		if (moduleC1==null){
 			moduleC1=module;
 		}
-		writeRF2TypeLine(bw,"null",releaseDate,"1",moduleC1,conRefList.get(infRel.c1Id),
-				conRefList.get(infRel.c2Id),infRel.group,conRefList.get(infRel.typeId),
+		writeRF2TypeLine(bw,"null",releaseDate,"1",moduleC1,conRefList.get(infRel.sourceId),
+				conRefList.get(infRel.destinationId),infRel.group,conRefList.get(infRel.typeId),
 				I_Constants.INFERRED, I_Constants.SOMEMODIFIER);
 
 	}
@@ -745,13 +745,13 @@ public class ClassificationRunner {
 				logger.info("::: [SnorocketMojo] compareAndWriteBack @ #\t" + countConSeen);
 			}
 
-			if (rel_A.c1Id == rel_B.c1Id) {
+			if (rel_A.sourceId == rel_B.sourceId) {
 				// COMPLETELY PROCESS ALL C1 FOR BOTH IN & OUT
 				// PROCESS C1 WITH GROUP == 0
-				int thisC1 = rel_A.c1Id;
+				int thisC1 = rel_A.sourceId;
 
 				// PROCESS WHILE BOTH HAVE GROUP 0
-				while (rel_A.c1Id == thisC1 && rel_B.c1Id == thisC1 && rel_A.group == 0
+				while (rel_A.sourceId == thisC1 && rel_B.sourceId == thisC1 && rel_A.group == 0
 						&& rel_B.group == 0 && !done_A && !done_B) {
 
 					// PROGESS GROUP ZERO
@@ -813,7 +813,7 @@ public class ClassificationRunner {
 				}
 
 				// REMAINDER LIST_A GROUP 0 FOR C1
-				while (rel_A.c1Id == thisC1 && rel_A.group == 0 && !done_A) {
+				while (rel_A.sourceId == thisC1 && rel_A.group == 0 && !done_A) {
 
 					countA_Diff++;
 					countA_Total++;
@@ -830,7 +830,7 @@ public class ClassificationRunner {
 				}
 
 				// REMAINDER LIST_B GROUP 0 FOR C1
-				while (rel_B.c1Id == thisC1 && rel_B.group == 0 && !done_B) {
+				while (rel_B.sourceId == thisC1 && rel_B.group == 0 && !done_B) {
 					countB_Diff++;
 					countB_Total++;
 					if (rel_B.typeId == isa) {
@@ -853,7 +853,7 @@ public class ClassificationRunner {
 
 				// SEGMENT GROUPS IN LIST_A
 				int prevGroup = Integer.MIN_VALUE;
-				while (rel_A.c1Id == thisC1 && !done_A) {
+				while (rel_A.sourceId == thisC1 && !done_A) {
 					if (rel_A.group != prevGroup) {
 						groupA = new RelationshipGroup();
 						groupList_A.add(groupA);
@@ -870,7 +870,7 @@ public class ClassificationRunner {
 				}
 				// SEGMENT GROUPS IN LIST_B
 				prevGroup = Integer.MIN_VALUE;
-				while (rel_B.c1Id == thisC1 && !done_B) {
+				while (rel_B.sourceId == thisC1 && !done_B) {
 					if (rel_B.group != prevGroup) {
 						groupB = new RelationshipGroup();
 						groupList_B.add(groupB);
@@ -921,11 +921,11 @@ public class ClassificationRunner {
 					countB_Total += groupList_A.countRels();
 					countB_Diff += groupList_NotEqual.countRels();
 				}
-			} else if (rel_A.c1Id > rel_B.c1Id) {
+			} else if (rel_A.sourceId > rel_B.sourceId) {
 				// CASE 2: LIST_B HAS CONCEPT NOT IN LIST_A
 				// COMPLETELY *ADD* ALL THIS C1 FOR REL_B AS NEW, CURRENT
-				int thisC1 = rel_B.c1Id;
-				while (rel_B.c1Id == thisC1) {
+				int thisC1 = rel_B.sourceId;
+				while (rel_B.sourceId == thisC1) {
 					countB_Diff++;
 					countB_Total++;
 					if (rel_B.typeId == isa) {
@@ -943,8 +943,8 @@ public class ClassificationRunner {
 			} else {
 				// CASE 3: LIST_A HAS CONCEPT NOT IN LIST_B
 				// COMPLETELY *RETIRE* ALL THIS C1 FOR REL_A
-				int thisC1 = rel_A.c1Id;
-				while (rel_A.c1Id == thisC1) {
+				int thisC1 = rel_A.sourceId;
+				while (rel_A.sourceId == thisC1) {
 					countA_Diff++;
 					countA_Total++;
 					if (rel_A.typeId == isa) {
@@ -1040,8 +1040,8 @@ public class ClassificationRunner {
 			throws IOException {
 
 		retiredSet.add(rel_A.getRelId());
-		writeRF2TypeLine(bw,rel_A.getRelId(),releaseDate,"0",module,conRefList.get(rel_A.c1Id),
-				conRefList.get(rel_A.c2Id),rel_A.group,conRefList.get(rel_A.typeId),
+		writeRF2TypeLine(bw,rel_A.getRelId(),releaseDate,"0",module,conRefList.get(rel_A.sourceId),
+				conRefList.get(rel_A.destinationId),rel_A.group,conRefList.get(rel_A.typeId),
 				I_Constants.INFERRED, I_Constants.SOMEMODIFIER);
 
 
@@ -1055,18 +1055,18 @@ public class ClassificationRunner {
 	 * @return the int
 	 */
 	private static int compareSnoRel(Relationship inR, Relationship outR) {
-		if ((inR.c1Id == outR.c1Id) && (inR.group == outR.group) && (inR.typeId == outR.typeId)
-				&& (inR.c2Id == outR.c2Id)) {
+		if ((inR.sourceId == outR.sourceId) && (inR.group == outR.group) && (inR.typeId == outR.typeId)
+				&& (inR.destinationId == outR.destinationId)) {
 			return 1; // SAME
-		} else if (inR.c1Id > outR.c1Id) {
+		} else if (inR.sourceId > outR.sourceId) {
 			return 2; // ADDED
-		} else if ((inR.c1Id == outR.c1Id) && (inR.group > outR.group)) {
+		} else if ((inR.sourceId == outR.sourceId) && (inR.group > outR.group)) {
 			return 2; // ADDED
-		} else if ((inR.c1Id == outR.c1Id) && (inR.group == outR.group)
+		} else if ((inR.sourceId == outR.sourceId) && (inR.group == outR.group)
 				&& (inR.typeId > outR.typeId)) {
 			return 2; // ADDED
-		} else if ((inR.c1Id == outR.c1Id) && (inR.group == outR.group)
-				&& (inR.typeId == outR.typeId) && (inR.c2Id > outR.c2Id)) {
+		} else if ((inR.sourceId == outR.sourceId) && (inR.group == outR.group)
+				&& (inR.typeId == outR.typeId) && (inR.destinationId > outR.destinationId)) {
 			return 2; // ADDED
 		} else {
 			return 3; // DROPPED

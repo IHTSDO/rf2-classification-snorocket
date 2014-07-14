@@ -18,7 +18,7 @@ package org.ihtsdo.classifier.model;
 
 /**
  * The Class StringIDConcept.
- * Represents an extension for concept, adding stringId, definitionstatus and module.
+ * Represents an extension for concept, adding stringId, definition status and module.
  */
 public class StringIDConcept extends Concept {
 
@@ -108,7 +108,7 @@ public class StringIDConcept extends Concept {
 	/**
 	 * Sets the id.
 	 *
-	 * @param cont the new id
+	 * @param id the new id
 	 */
 	public void setId(int id) {
 		this.id = id;
