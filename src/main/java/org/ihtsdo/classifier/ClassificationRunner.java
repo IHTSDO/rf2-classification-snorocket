@@ -52,6 +52,7 @@ import au.csiro.snorocket.snapi.Snorocket_123;
  * Inferred relationships are saved in file which is a parameter of class constructor.
  *
  * This class has a main method for example.
+ * 
  */
 public class ClassificationRunner {
 
@@ -1040,7 +1041,12 @@ public class ClassificationRunner {
 			throws IOException {
 
 		retiredSet.add(rel_A.getRelId());
-		writeRF2TypeLine(bw,rel_A.getRelId(),releaseDate,"0",module,conRefList.get(rel_A.sourceId),
+
+		String moduleC1=conceptModule.get(rel_A.sourceId);
+		if (moduleC1==null){
+			moduleC1=module;
+		}
+		writeRF2TypeLine(bw,rel_A.getRelId(),releaseDate,"0",moduleC1,conRefList.get(rel_A.sourceId),
 				conRefList.get(rel_A.destinationId),rel_A.group,conRefList.get(rel_A.typeId),
 				I_Constants.INFERRED, I_Constants.SOMEMODIFIER);
 
