@@ -19,6 +19,10 @@ package org.ihtsdo.classifier.model;
 /**
  * The Class StringIDConcept.
  * Represents an extension for concept, adding stringId, definition status and module.
+ * 
+ * @author Alejandro Rodriguez.
+ *
+ * @version 1.0
  */
 public class StringIDConcept extends Concept {
 

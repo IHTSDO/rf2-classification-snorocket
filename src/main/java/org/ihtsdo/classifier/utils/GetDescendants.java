@@ -34,6 +34,10 @@ import java.util.HashSet;
  * The process usages a rf2 relationship file to getting is-a relationships.
  * 
  * Results are saved in output file passed as parameter
+ * 
+ * @author Alejandro Rodriguez.
+ *
+ * @version 1.0
  */
 public class GetDescendants {
 
