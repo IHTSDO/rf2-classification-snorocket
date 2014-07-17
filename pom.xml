@@ -34,4 +34,12 @@
             <scope>compile</scope>
         </dependency>
     </dependencies>
+	<repositories>
+		<!-- TODO: Upgrade snorocket-snapi dependency to one that's publicly available from the source (http://aehrc.com/maven2/) ? -->
+		<!-- Some parts of this repo require a password which is no good for an open source project. -->
+		<repository>
+			<id>aceworkspace</id>
+			<url>https://mgr.servers.aceworkspace.net/apps/ihtsdo-archiva/repository/wb-releases/</url>
+		</repository>
+	</repositories>
 </project>
