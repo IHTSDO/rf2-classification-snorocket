@@ -41,7 +41,9 @@ import org.ihtsdo.classifier.utils.I_Constants;
  * Output results are conceptIds for detected cycled.
  * ConceptIds for detected cycled are saved in file which is a parameter of class constructor.
  *
- * This class has a main method for example.
+ * @author Alejandro Rodriguez.
+ *
+ * @version 1.0
  */
 public class CycleCheck {
 
@@ -58,10 +60,10 @@ public class CycleCheck {
 	private long ISARELATIONSHIPTYPEID=116680003l;
 
 	/** The concept file. */
-	private String conceptFile;
+	private String[] conceptFile;
 
 	/** The relationship file. */
-	private String relationshipFile;
+	private String[] relationshipFile;
 
 	/** The output file. */
 	private String outputFile;
@@ -83,7 +85,7 @@ public class CycleCheck {
 	 * @param relationshipFile the relationship file
 	 * @param outputFile the output file
 	 */
-	public CycleCheck(String conceptFile, String relationshipFile,
+	public CycleCheck(String[] conceptFile, String[] relationshipFile,
 			String outputFile) {
 		super();
 
@@ -100,6 +102,7 @@ public class CycleCheck {
 		getParams();
 	}
 
+	@SuppressWarnings("unchecked")
 	private void getParams() throws ConfigurationException {
 
 		try {
@@ -108,14 +111,26 @@ public class CycleCheck {
 			logger.info("CycleCheck - Error happened getting params file." + e.getMessage());
 			throw e;
 		}
-		
-		conceptFile = xmlConfig.getString(I_Constants.CONCEPT_SNAPSHOT_FILE);
-		relationshipFile=xmlConfig.getString(I_Constants.RELATIONSHIP_SNAPSHOT_FILE);
+		List<String> conceptFiles= xmlConfig
+				.getList(I_Constants.CONCEPT_SNAPSHOT_FILES);
+		conceptFile=new String[conceptFiles.size()];
+		conceptFiles.toArray(conceptFile);
+
+		List<String> relFiles= xmlConfig
+				.getList(I_Constants.RELATIONSHIP_SNAPSHOT_FILES);
+		relationshipFile=new String[relFiles.size()];
+		relFiles.toArray(relationshipFile);
 		outputFile=xmlConfig.getString(I_Constants.DETECTED_CYCLE_OUTPUT_FILE);
-		
+
 		logger.info("CheckCycle - Parameters:");
-		logger.info("Concept file = " + conceptFile);
-		logger.info("Relationship file = " + relationshipFile);
+		logger.info("Concept files : ");
+		for (String concept:conceptFile){
+			logger.info( concept);
+		}
+		logger.info("Relationship files : " );
+		for (String relFile:relationshipFile){
+			logger.info(relFile);
+		}
 		logger.info("Detected cycle output file = " + outputFile);
 
 	}
@@ -129,8 +144,8 @@ public class CycleCheck {
 	 */
 	public boolean cycleDetected() throws FileNotFoundException, IOException{
 		conceptInLoop=new HashSet<Long>();
-		loadConceptsFile(new File(conceptFile));
-		loadIsaRelationshipsFile(new File(relationshipFile));
+		loadConceptsFile();
+		loadIsaRelationshipsFile();
 		for(Long con:concepts.keySet()){
 			if (!concepts.get(con)){
 				List<Long> desc=new ArrayList<Long>();
@@ -202,37 +217,41 @@ public class CycleCheck {
 	/**
 	 * Load concepts file.
 	 *
-	 * @param conceptsFile the concepts file
+	 * @param conceptFile2 the concepts file
 	 * @throws java.io.FileNotFoundException the file not found exception
 	 * @throws java.io.IOException Signals that an I/O exception has occurred.
 	 */
-	public void loadConceptsFile(File conceptsFile) throws FileNotFoundException, IOException {
-		logger.info("Starting Concepts: " + conceptsFile.getName());
-		BufferedReader br = new BufferedReader(new InputStreamReader(new FileInputStream(conceptsFile), "UTF8"));
-		try {
-			concepts=new HashMap<Long, Boolean>();
-			String line = br.readLine();
-			line = br.readLine(); // Skip header
-			int count = 0;
-			while (line != null) {
-				if (line.isEmpty()) {
-					continue;
-				}
-				String[] columns = line.split("\t",-1);
-				if ( columns[2].equals("1") ){
+	public void loadConceptsFile() throws FileNotFoundException, IOException {
 
-					concepts.put(Long.parseLong(columns[0]), false);
-					count++;
-					if (count % 100000 == 0) {
-						System.out.print(".");
+		concepts=new HashMap<Long, Boolean>();
+		int count = 0;
+		for (String concept:conceptFile){
+			logger.info("Starting Concepts: " + concept);
+			BufferedReader br = new BufferedReader(new InputStreamReader(new FileInputStream(concept), "UTF8"));
+			try {
+				String line = br.readLine();
+				line=br.readLine();
+				while (line != null) {
+					if (line.isEmpty()) {
+						continue;
 					}
+					String[] columns = line.split("\t",-1);
+					if ( columns[2].equals("1") ){
+
+						concepts.put(Long.parseLong(columns[0]), false);
+						count++;
+						if (count % 100000 == 0) {
+							System.out.print(".");
+						}
+					}
+					line = br.readLine();
 				}
-				line = br.readLine();
+
+				logger.info(".");
+				logger.info("Active concepts loaded = " + concepts.size());
+			} finally {
+				br.close();
 			}
-			logger.info(".");
-			logger.info("Active concepts loaded = " + concepts.size());
-		} finally {
-			br.close();
 		}
 
 	}
@@ -243,45 +262,47 @@ public class CycleCheck {
 	/**
 	 * Load isa relationships file.
 	 *
-	 * @param relationshipsFile the relationships file
 	 * @throws java.io.FileNotFoundException the file not found exception
 	 * @throws java.io.IOException Signals that an I/O exception has occurred.
 	 */
-	public void loadIsaRelationshipsFile(File relationshipsFile) throws FileNotFoundException, IOException {
-		logger.info("Starting Isas Relationships from: " + relationshipsFile.getName());
-		BufferedReader br = new BufferedReader(new InputStreamReader(new FileInputStream(relationshipsFile), "UTF8"));
-		try {
-			String line = br.readLine();
-			isarelationships=new HashMap<Long,List<Long>>();
-			int count = 0;
-			line = br.readLine(); // Skip header
-			while (line != null) {
-				if (line.isEmpty()) {
-					continue;
-				}
-				String[] columns = line.split("\t");
-				if (Long.parseLong(columns[7])==ISARELATIONSHIPTYPEID 
-						&& columns[2].equals("1")){
-					Long sourceId = Long.parseLong(columns[4]);
+	public void loadIsaRelationshipsFile() throws FileNotFoundException, IOException {
 
-					List<Long> relList = isarelationships.get(sourceId);
-					if (relList == null) {
-						relList = new ArrayList<Long>();
+		isarelationships=new HashMap<Long,List<Long>>();
+		int count = 0;
+		for (String relFile:relationshipFile){
+			logger.info("Starting Isas Relationships from: " + relFile);
+			BufferedReader br = new BufferedReader(new InputStreamReader(new FileInputStream(relFile), "UTF8"));
+			try {
+				String line = br.readLine();
+				line=br.readLine();
+				while (line != null) {
+					if (line.isEmpty()) {
+						continue;
 					}
-					relList.add(Long.parseLong(columns[5]));
-					isarelationships.put(sourceId, relList);
+					String[] columns = line.split("\t");
+					if (Long.parseLong(columns[7])==ISARELATIONSHIPTYPEID 
+							&& columns[2].equals("1")){
+						Long sourceId = Long.parseLong(columns[4]);
 
-					count++;
-					if (count % 100000 == 0) {
-						System.out.print(".");
+						List<Long> relList = isarelationships.get(sourceId);
+						if (relList == null) {
+							relList = new ArrayList<Long>();
+						}
+						relList.add(Long.parseLong(columns[5]));
+						isarelationships.put(sourceId, relList);
+
+						count++;
+						if (count % 100000 == 0) {
+							System.out.print(".");
+						}
 					}
+					line = br.readLine();
 				}
-				line = br.readLine();
+				logger.info(".");
+				logger.info("Active isas Relationships for " +  isarelationships.size() + "  concepts loaded.");
+			} finally {
+				br.close();
 			}
-			logger.info(".");
-			logger.info("Active isas Relationships for " +  isarelationships.size() + "  concepts loaded.");
-		} finally {
-			br.close();
 		}
 	}
 }

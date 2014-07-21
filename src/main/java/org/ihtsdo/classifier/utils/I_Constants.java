@@ -19,7 +19,7 @@ package org.ihtsdo.classifier.utils;
 /**
  * Title: I_Constants Description: Declared all the constants used by routines Copyright: Copyright (c) 2010 Company: IHTSDO
  * 
- * * @author Alejandro Rodriguez.
+ * @author Alejandro Rodriguez.
  *
  * @version 1.0
  */
@@ -449,9 +449,9 @@ public class I_Constants {
 	/** The Constant IDENTIFIER_SCHEME_ID. */
 	public static final String IDENTIFIER_SCHEME_ID = "900000000000002006";
 
-	public static final String CONCEPT_SNAPSHOT_FILE = "concept_snapshot_file";
+	public static final String CONCEPT_SNAPSHOT_FILES = "concept_snapshot_files.file";
 
-	public static final String RELATIONSHIP_SNAPSHOT_FILE = "relationship_snapshot_file";
+	public static final String RELATIONSHIP_SNAPSHOT_FILES = "relationship_snapshot_files.file";
 
 	public static final String EQUIVALENT_CONCEPTS_OUTPUT_FILE = "equivalent_concept_output_file";
 
@@ -461,7 +461,7 @@ public class I_Constants {
 
 	public static final String RELEASEDATE = "release_date";
 
-	public static final String PREVIOUS_INFERRED_RELATIONSHIP_FILE = "previous_inferred_relationship_snapshot_file";
+	public static final String PREVIOUS_INFERRED_RELATIONSHIP_FILES = "previous_inferred_relationship_snapshot_files.file";
 
 	public static final String INFERRED_RELATIONSHIPS_OUTPUT_FILE = "inferred_relationships_output_file";
 	

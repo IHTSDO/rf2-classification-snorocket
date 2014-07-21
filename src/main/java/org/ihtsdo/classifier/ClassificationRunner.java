@@ -35,8 +35,13 @@ import java.util.List;
 import org.apache.commons.configuration.ConfigurationException;
 import org.apache.commons.configuration.XMLConfiguration;
 import org.apache.log4j.Logger;
-import org.ihtsdo.classifier.model.*;
+import org.ihtsdo.classifier.model.Concept;
+import org.ihtsdo.classifier.model.ConceptGroup;
 import org.ihtsdo.classifier.model.EquivalentClasses;
+import org.ihtsdo.classifier.model.Relationship;
+import org.ihtsdo.classifier.model.RelationshipGroup;
+import org.ihtsdo.classifier.model.RelationshipGroupList;
+import org.ihtsdo.classifier.model.StringIDConcept;
 import org.ihtsdo.classifier.utils.GetDescendants;
 import org.ihtsdo.classifier.utils.I_Constants;
 
@@ -51,14 +56,15 @@ import au.csiro.snorocket.snapi.Snorocket_123;
  * Output results are inferred relationships composed of taxonomy and attributes.
  * Inferred relationships are saved in file which is a parameter of class constructor.
  *
- * This class has a main method for example.
- * 
+ * @author Alejandro Rodriguez.
+ *
+ * @version 1.0
  */
 public class ClassificationRunner {
 
 	/** The prev inferred rels. */
-	private String previousInferredRelationships;
-	
+	private String[] previousInferredRelationships;
+
 	/** The output tmp. */
 	private File tempRelationshipStore;
 
@@ -75,12 +81,12 @@ public class ClassificationRunner {
 	 * @param newInferredRelationships the output rels
 	 * @param equivalencyReport the equiv concept file
 	 */
-	public ClassificationRunner(String module, String releaseDate, String concepts,
-			String statedRelationships,String previousInferredRelationships, String newInferredRelationships, String equivalencyReport) {
+	public ClassificationRunner(String module, String releaseDate, String[] concepts,
+			String[] statedRelationships,String[] previousInferredRelationships, String newInferredRelationships, String equivalencyReport) {
 		super();
 
 		logger = Logger.getLogger("org.ihtsdo.classifier.ClassificationRunner");
-		
+
 		this.module = module;
 		this.releaseDate = releaseDate;
 		this.concepts = concepts;
@@ -97,57 +103,57 @@ public class ClassificationRunner {
 		this.config=config;
 
 		logger = Logger.getLogger("org.ihtsdo.classifier.ClassificationRunner");
-		
+
 		getParams();
 
 		File outputFile=new File(newInferredRelationships);
 		tempRelationshipStore=new File(outputFile.getParentFile(),"Tmp_" + outputFile.getName());
-		
+
 	}
 
 	/** The edited snomed concepts. */
 	private  ArrayList<StringIDConcept> cEditSnoCons;
-	
+
 	/** The edit snomed rels. */
 	private  ArrayList<Relationship> cEditRelationships;
-	
+
 	/** The con ref list. */
 	private  HashMap<Integer, String> conRefList;
-	
+
 	/** The con str list. */
 	private  HashMap<String,Integer> conStrList;
-	
+
 	/** The logger. */
 	private  Logger logger;
-	
+
 	/** The c rocket sno rels. */
 	private  ArrayList<Relationship> cRocketRelationships;
-	
+
 	/** The isa. */
 	private  Integer isa;
-	
+
 	/** The concept module. */
 	private  HashMap<Integer,String> conceptModule;
 
 	//params
 	/** The module. */
 	private  String module;
-	
+
 	/** The release date. */
 	private  String releaseDate;
-	
+
 	/** The concepts. */
-	private  String concepts;
-	
+	private  String[] concepts;
+
 	/** The stated rels. */
-	private  String statedRelationships;
-	
+	private  String[] statedRelationships;
+
 	/** The output rels. */
 	private  String newInferredRelationships;
-	
+
 	/** The equiv concept file. */
 	private  String equivalencyReport;
-	
+
 	/** The retired set. */
 	private HashSet<String> retiredSet;
 
@@ -171,8 +177,8 @@ public class ClassificationRunner {
 
 			HashSet<String>parentConcepts=new HashSet<String>();
 			parentConcepts.add(I_Constants.ATTRIBUTE_ROOT_CONCEPT); //concept model attribute
-			File relationshipFile=new File(statedRelationships);
-			int[] roles =getRoles(parentConcepts,relationshipFile); 
+
+			int[] roles =getRoles(parentConcepts); 
 			int ridx = roles.length;
 			if (roles.length > 100) {
 				String errStr = "Role types exceeds 100. This will cause a memory issue. "
@@ -281,7 +287,7 @@ public class ClassificationRunner {
 			conStrList=new HashMap<String,Integer>();
 			loadConceptFilesTomap(concepts,true);
 			cEditSnoCons=null;
-			if (previousInferredRelationships!=null){
+			if (previousInferredRelationships!=null && previousInferredRelationships.length>0){
 				loadRelationshipFilesTomap(previousInferredRelationships);
 			}
 			conStrList=null;
@@ -296,7 +302,7 @@ public class ClassificationRunner {
 
 			// WRITEBACK RESULTS
 			startTime = System.currentTimeMillis();
-			if (previousInferredRelationships==null){
+			if (previousInferredRelationships==null || previousInferredRelationships.length==0){
 				writeInferredRel(cRocketRelationships);
 			}else{
 
@@ -340,26 +346,29 @@ public class ClassificationRunner {
 		rfis=null;
 		risr=null;
 
-		rfis = new FileInputStream(previousInferredRelationships);
-		risr = new InputStreamReader(rfis,"UTF-8");
-		rbr = new BufferedReader(risr);
-		rbr.readLine();
 		String[] spl;
-		while((line=rbr.readLine())!=null){
+		for (String relFile:previousInferredRelationships){
 
-			spl=line.split("\t",-1);
-			if (retiredSet.contains(spl[0])){
-				continue;
+			rfis = new FileInputStream(relFile);
+			risr = new InputStreamReader(rfis,"UTF-8");
+			rbr = new BufferedReader(risr);
+			rbr.readLine();
+			while((line=rbr.readLine())!=null){
+
+				spl=line.split("\t",-1);
+				if (retiredSet.contains(spl[0])){
+					continue;
+				}
+				bw.append(line);
+				bw.append("\r\n");
 			}
-			bw.append(line);
-			bw.append("\r\n");
+			rbr.close();
+			rbr=null;
+			rfis=null;
+			risr=null;
 		}
 		bw.close();
-		rbr.close();
-		rbr=null;
-		rfis=null;
-		risr=null;
-//		tempRelationshipStore.delete();
+		tempRelationshipStore.delete();
 	}
 
 	/**
@@ -375,7 +384,7 @@ public class ClassificationRunner {
 		s.append((float) lapseTime / 1000).append(" (seconds)");
 		return s.toString();
 	}
-	
+
 	/**
 	 * Gets the roles.
 	 *
@@ -384,12 +393,15 @@ public class ClassificationRunner {
 	 * @return the roles
 	 * @throws Exception the exception
 	 */
-	private  int[] getRoles(HashSet<String> parentConcepts, File relationshipFile) throws Exception {
-
-		GetDescendants getDesc=new GetDescendants(parentConcepts, relationshipFile, null);
-		getDesc.execute();
-		HashSet<String> roles=getDesc.getDescendants();
-		getDesc=null;
+	private  int[] getRoles(HashSet<String> parentConcepts) throws Exception {
+		HashSet<String> roles=new HashSet<String>();
+		for (String statedRel:statedRelationships){
+			File relationshipFile=new File(statedRel);
+			GetDescendants getDesc=new GetDescendants(parentConcepts, relationshipFile, null);
+			getDesc.execute();
+			roles.addAll(getDesc.getDescendants());
+			getDesc=null;
+		}
 		roles.add(GetDescendants.ISA_SCTID);
 		int[] result=new int[roles.size()];
 		int resIdx=0;
@@ -401,50 +413,53 @@ public class ClassificationRunner {
 		Arrays.sort(result);
 		return result;
 	}
-	
+
 	/**
 	 * Load concept files to map.
 	 *
-	 * @param conceptFile the concept file
+	 * @param concepts2 the concept file
 	 * @param mapToModule the map to module
 	 * @throws java.io.IOException Signals that an I/O exception has occurred.
 	 */
-	public  void loadConceptFilesTomap(String conceptFile,boolean mapToModule )throws IOException {
+	public  void loadConceptFilesTomap(String[] concepts,boolean mapToModule )throws IOException {
 
 		if (mapToModule){
 			conceptModule=new HashMap<Integer,String>();
 		}
-		FileInputStream rfis = new FileInputStream(conceptFile);
-		InputStreamReader risr = new InputStreamReader(rfis,"UTF-8");
-		BufferedReader rbr = new BufferedReader(risr);
+		int cont=Integer.MIN_VALUE + 3;
 
 		String line;
 		String[] spl;
-		rbr.readLine();
-		int cont=Integer.MIN_VALUE + 3;
 		boolean definitionStatusId ;
-		while((line=rbr.readLine())!=null){
 
-			spl=line.split("\t",-1);
-			if (spl[2].equals("1") ){
-				cont++;
-				conRefList.put(cont,spl[0]);
-				conStrList.put(spl[0],cont);
+		for (String concept:concepts){
+			FileInputStream rfis = new FileInputStream(concept);
+			InputStreamReader risr = new InputStreamReader(rfis,"UTF-8");
+			BufferedReader rbr = new BufferedReader(risr);
+			rbr.readLine();
+			while((line=rbr.readLine())!=null){
 
-				definitionStatusId = (spl[4].equals(I_Constants.FULLY_DEFINED));
-				StringIDConcept conStr=new StringIDConcept(cont,spl[0],definitionStatusId);
-				cEditSnoCons.add(conStr);
-				if (mapToModule){
-					if (spl[0].equals(I_Constants.META_SCTID)){
-						conceptModule.put(cont, module);
-					}else{
-						conceptModule.put(cont, spl[3]);
+				spl=line.split("\t",-1);
+				if (spl[2].equals("1") && !conStrList.containsKey(spl[0]) ){
+					cont++;
+					conRefList.put(cont,spl[0]);
+					conStrList.put(spl[0],cont);
+
+					definitionStatusId = (spl[4].equals(I_Constants.FULLY_DEFINED));
+					StringIDConcept conStr=new StringIDConcept(cont,spl[0],definitionStatusId);
+					cEditSnoCons.add(conStr);
+					if (mapToModule){
+						if (spl[0].equals(I_Constants.META_SCTID)){
+							conceptModule.put(cont, module);
+						}else{
+							conceptModule.put(cont, spl[3]);
+						}
 					}
 				}
 			}
+			rbr.close();
+			rbr=null;
 		}
-		rbr.close();
-		rbr=null;
 	}
 
 	/**
@@ -453,34 +468,34 @@ public class ClassificationRunner {
 	 * @param relationshipFile the relationship file
 	 * @throws java.io.IOException Signals that an I/O exception has occurred.
 	 */
-	public  void loadRelationshipFilesTomap( String relationshipFile)throws IOException {
-
-
-		FileInputStream rfis = new FileInputStream(relationshipFile);
-		InputStreamReader risr = new InputStreamReader(rfis,"UTF-8");
-		BufferedReader rbr = new BufferedReader(risr);
+	public  void loadRelationshipFilesTomap( String[] relationshipFiles)throws IOException {
 
 		String line;
 		String[] spl;
-		rbr.readLine();
+		for (String relFile:relationshipFiles){
+			FileInputStream rfis = new FileInputStream(relFile);
+			InputStreamReader risr = new InputStreamReader(rfis,"UTF-8");
+			BufferedReader rbr = new BufferedReader(risr);
+			rbr.readLine();
 
-		while((line=rbr.readLine())!=null){
+			while((line=rbr.readLine())!=null){
 
-			spl=line.split("\t",-1);
-			if (spl[2].equals("1") && (spl[8].equals(I_Constants.INFERRED)
-					|| spl[8].equals(I_Constants.STATED))){
-				int c1=conStrList.get(spl[4]);
-				int c2=conStrList.get(spl[5]);
-				int rg=Integer.parseInt(spl[6]);
-				int ty=conStrList.get(spl[7]);
-				Relationship rel=new Relationship(c1,c2,ty,rg,spl[0]);
-				cEditRelationships.add(rel);
+				spl=line.split("\t",-1);
+				if (spl[2].equals("1") && (spl[8].equals(I_Constants.INFERRED)
+						|| spl[8].equals(I_Constants.STATED))){
+					int c1=conStrList.get(spl[4]);
+					int c2=conStrList.get(spl[5]);
+					int rg=Integer.parseInt(spl[6]);
+					int ty=conStrList.get(spl[7]);
+					Relationship rel=new Relationship(c1,c2,ty,rg,spl[0]);
+					cEditRelationships.add(rel);
+				}
 			}
+			rbr.close();
+			rbr=null;
 		}
-		rbr.close();
-		rbr=null;
 	}
-	
+
 	/**
 	 * The Class ProcessResults.
 	 */
@@ -488,7 +503,7 @@ public class ClassificationRunner {
 
 		/** The snorels. */
 		private List<Relationship> snorels;
-		
+
 		/** The count rel. */
 		private int countRel = 0; // STATISTICS COUNTER
 
@@ -523,7 +538,7 @@ public class ClassificationRunner {
 
 		/** The count con set. */
 		private int countConSet = 0; // STATISTICS COUNTER
-		
+
 		/** The equiv concept. */
 		private EquivalentClasses equivalentClasses;
 
@@ -622,7 +637,7 @@ public class ClassificationRunner {
 		osw=null;
 		fos=null;
 	}
-	
+
 	/**
 	 * Write rel.
 	 *
@@ -664,7 +679,7 @@ public class ClassificationRunner {
 				+ "\t" + characteristicTypeId + "\t" + modifierId);
 		bw.append( "\r\n");
 	}
-	
+
 	/**
 	 * Compare and write back.
 	 *
@@ -1111,6 +1126,7 @@ public class ClassificationRunner {
 		return testNum;
 	}
 
+	@SuppressWarnings("unchecked")
 	private void getParams() throws ConfigurationException  {
 
 		try {
@@ -1122,21 +1138,43 @@ public class ClassificationRunner {
 
 		this.module = xmlConfig.getString(I_Constants.MODULEID);
 		this.releaseDate=xmlConfig.getString(I_Constants.RELEASEDATE);
-		this.concepts = xmlConfig.getString(I_Constants.CONCEPT_SNAPSHOT_FILE);
-		this.statedRelationships=xmlConfig.getString(I_Constants.RELATIONSHIP_SNAPSHOT_FILE);
 		this.equivalencyReport=xmlConfig.getString(I_Constants.EQUIVALENT_CONCEPTS_OUTPUT_FILE);
-		this.previousInferredRelationships=xmlConfig.getString(I_Constants.PREVIOUS_INFERRED_RELATIONSHIP_FILE);
 		this.newInferredRelationships=xmlConfig.getString(I_Constants.INFERRED_RELATIONSHIPS_OUTPUT_FILE);
+		List<String> conceptFiles= xmlConfig
+				.getList(I_Constants.CONCEPT_SNAPSHOT_FILES);
+		concepts=new String[conceptFiles.size()];
+		conceptFiles.toArray(concepts);
 		
+		List<String> relFiles= xmlConfig
+				.getList(I_Constants.RELATIONSHIP_SNAPSHOT_FILES);
+		statedRelationships=new String[relFiles.size()];
+		relFiles.toArray(statedRelationships);
 		
+		List<String> prevRelFiles= xmlConfig
+				.getList(I_Constants.PREVIOUS_INFERRED_RELATIONSHIP_FILES);
+		if (prevRelFiles!=null && prevRelFiles.size()>0){
+			previousInferredRelationships=new String[prevRelFiles.size()];
+			prevRelFiles.toArray(previousInferredRelationships);
+		}
 		logger.info("Classification - Parameters:");
 		logger.info("Module = " + module);
 		logger.info("Release date = " + releaseDate);
-		logger.info("Concept file = " + concepts);
-		logger.info("Relationship file = " + statedRelationships);
 		logger.info("Equivalent Concept Output file = " + equivalencyReport);
 		logger.info("Previous Inferred Relationship file = " + previousInferredRelationships);
 		logger.info("Inferred Relationship Output file = " + newInferredRelationships);
-
+		logger.info("Concept files : ");
+		for (String concept:concepts){
+			logger.info( concept);
+		}
+		logger.info("Stated Relationship files : " );
+		for (String relFile:statedRelationships){
+			logger.info(relFile);
+		}
+		logger.info("Previous Relationship files : " );
+		if (previousInferredRelationships!=null){
+			for (String relFile:previousInferredRelationships){
+				logger.info(relFile);
+			}
+		}
 	}
 }
