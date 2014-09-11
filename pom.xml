@@ -34,4 +34,39 @@
             <scope>compile</scope>
         </dependency>
     </dependencies>
+	<build>
+		<plugins>
+			<!-- Create executable jar -->
+			<plugin>
+				<artifactId>maven-assembly-plugin</artifactId>
+				<configuration>
+					<archive>
+						<manifest>
+							<mainClass>org.ihtsdo.classifier.ClassifierManager</mainClass>
+						</manifest>
+					</archive>
+					<descriptorRefs>
+						<descriptorRef>jar-with-dependencies</descriptorRef>
+					</descriptorRefs>
+				</configuration>
+				<executions>
+					<execution>
+						<id>make-assembly</id> <!-- this is used for inheritance merges -->
+						<phase>package</phase> <!-- bind to the packaging phase -->
+						<goals>
+							<goal>single</goal>
+						</goals>
+					</execution>
+				</executions>
+			</plugin>
+		</plugins>
+	</build>
+	<repositories>
+		<!-- TODO: Upgrade snorocket-snapi dependency to one that's publicly available from the source (http://aehrc.com/maven2/) ? -->
+		<!-- Some parts of this repo require a password which is no good for an open source project. -->
+		<repository>
+			<id>aceworkspace</id>
+			<url>https://mgr.servers.aceworkspace.net/apps/ihtsdo-archiva/repository/wb-releases/</url>
+		</repository>
+	</repositories>
 </project>

@@ -485,11 +485,16 @@ public class ClassificationRunner {
 				spl=line.split("\t",-1);
 				if (spl[2].equals("1") && (spl[8].equals(I_Constants.INFERRED)
 						|| spl[8].equals(I_Constants.STATED))){
-					int c1=conStrList.get(spl[4]);
-					int c2=conStrList.get(spl[5]);
-					int rg=Integer.parseInt(spl[6]);
-					int ty=conStrList.get(spl[7]);
-					Relationship rel=new Relationship(c1,c2,ty,rg,spl[0]);
+					Integer c1 = conStrList.get(spl[4]);
+					Integer c2 = conStrList.get(spl[5]);
+					Integer rg = Integer.parseInt(spl[6]);
+					Integer ty = conStrList.get(spl[7]);
+
+					if (c1 == null || c2 == null || rg == null || ty == null) {
+						logger.error("Unexpected null value c1:" + c1 + ", c2:" + c2 + ", rg:" + rg + ", ty:" + ty + ", loading line:\"" + line + "\"");
+					}
+
+					Relationship rel = new Relationship(c1, c2, ty, rg, spl[0]);
 					cEditRelationships.add(rel);
 				}
 			}
