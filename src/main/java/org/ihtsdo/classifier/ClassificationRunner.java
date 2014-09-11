@@ -440,20 +440,22 @@ public class ClassificationRunner {
 			while((line=rbr.readLine())!=null){
 
 				spl=line.split("\t",-1);
-				if (spl[2].equals("1") && !conStrList.containsKey(spl[0]) ){
+				if (!conStrList.containsKey(spl[0]) ){
 					cont++;
 					conRefList.put(cont,spl[0]);
 					conStrList.put(spl[0],cont);
 
-					definitionStatusId = (spl[4].equals(I_Constants.FULLY_DEFINED));
-					StringIDConcept conStr=new StringIDConcept(cont,spl[0],definitionStatusId);
-					cEditSnoCons.add(conStr);
 					if (mapToModule){
 						if (spl[0].equals(I_Constants.META_SCTID)){
 							conceptModule.put(cont, module);
 						}else{
 							conceptModule.put(cont, spl[3]);
 						}
+					}
+					if (spl[2].equals("1") ){
+						definitionStatusId = (spl[4].equals(I_Constants.FULLY_DEFINED));
+						StringIDConcept conStr=new StringIDConcept(cont,spl[0],definitionStatusId);
+						cEditSnoCons.add(conStr);
 					}
 				}
 			}
@@ -1149,12 +1151,12 @@ public class ClassificationRunner {
 				.getList(I_Constants.CONCEPT_SNAPSHOT_FILES);
 		concepts=new String[conceptFiles.size()];
 		conceptFiles.toArray(concepts);
-		
+
 		List<String> relFiles= xmlConfig
 				.getList(I_Constants.RELATIONSHIP_SNAPSHOT_FILES);
 		statedRelationships=new String[relFiles.size()];
 		relFiles.toArray(statedRelationships);
-		
+
 		List<String> prevRelFiles= xmlConfig
 				.getList(I_Constants.PREVIOUS_INFERRED_RELATIONSHIP_FILES);
 		if (prevRelFiles!=null && prevRelFiles.size()>0){
