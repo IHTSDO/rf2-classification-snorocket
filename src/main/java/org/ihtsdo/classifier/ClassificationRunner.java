@@ -16,39 +16,19 @@
  */
 package org.ihtsdo.classifier;
 
-import java.io.BufferedReader;
-import java.io.BufferedWriter;
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.io.InputStreamReader;
-import java.io.OutputStreamWriter;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.List;
-
-import org.apache.commons.configuration.ConfigurationException;
-import org.apache.commons.configuration.XMLConfiguration;
-import org.apache.log4j.Logger;
-import org.ihtsdo.classifier.model.Concept;
-import org.ihtsdo.classifier.model.ConceptGroup;
-import org.ihtsdo.classifier.model.EquivalentClasses;
-import org.ihtsdo.classifier.model.Relationship;
-import org.ihtsdo.classifier.model.RelationshipGroup;
-import org.ihtsdo.classifier.model.RelationshipGroupList;
-import org.ihtsdo.classifier.model.StringIDConcept;
-import org.ihtsdo.classifier.utils.GetDescendants;
-import org.ihtsdo.classifier.utils.I_Constants;
-
 import au.csiro.snorocket.core.IFactory_123;
 import au.csiro.snorocket.snapi.I_Snorocket_123.I_Callback;
 import au.csiro.snorocket.snapi.I_Snorocket_123.I_EquivalentCallback;
 import au.csiro.snorocket.snapi.Snorocket_123;
+import org.apache.commons.configuration.ConfigurationException;
+import org.apache.commons.configuration.XMLConfiguration;
+import org.apache.log4j.Logger;
+import org.ihtsdo.classifier.model.*;
+import org.ihtsdo.classifier.utils.GetDescendants;
+import org.ihtsdo.classifier.utils.I_Constants;
+
+import java.io.*;
+import java.util.*;
 
 /**
  * The Class ClassificationRunner.
@@ -63,12 +43,43 @@ import au.csiro.snorocket.snapi.Snorocket_123;
 public class ClassificationRunner {
 
 	/** The prev inferred rels. */
-	private String[] previousInferredRelationships;
+	private List<String> previousInferredRelationships;
 
 	/** The output tmp. */
 	private File tempRelationshipStore;
 
 	private File config;
+
+	public ClassificationRunner() {
+		logger = Logger.getLogger("org.ihtsdo.classifier.ClassificationRunner");
+	}
+
+	/**
+	 * Instantiates a new classification runner.
+	 *
+	 * @param module the module
+	 * @param releaseDate the release date
+	 * @param conceptFilePaths the concepts
+	 * @param statedRelationshipFilePaths the stated rels
+	 * @param previousInferredRelationshipFilePaths the prev inferred rels
+	 * @param inferredRelationshipOutputFilePath the output rels
+	 * @param equivalencyReportOutputFilePath the equiv concept file
+	 */
+	public ClassificationRunner(String module, String releaseDate, List<String> conceptFilePaths,
+			List<String> statedRelationshipFilePaths, List<String> previousInferredRelationshipFilePaths,
+			String inferredRelationshipOutputFilePath, String equivalencyReportOutputFilePath) {
+		this();
+		this.module = module;
+		this.releaseDate = releaseDate;
+		this.concepts = conceptFilePaths;
+		this.statedRelationships = statedRelationshipFilePaths;
+		this.newInferredRelationships = inferredRelationshipOutputFilePath;
+		this.equivalencyReport = equivalencyReportOutputFilePath;
+		this.previousInferredRelationships = previousInferredRelationshipFilePaths;
+
+		File outputFile=new File(newInferredRelationships);
+		tempRelationshipStore=new File(outputFile.getParentFile(), "Tmp_" + outputFile.getName());
+	}
 
 	/**
 	 * Instantiates a new classification runner.
@@ -83,27 +94,30 @@ public class ClassificationRunner {
 	 */
 	public ClassificationRunner(String module, String releaseDate, String[] concepts,
 			String[] statedRelationships,String[] previousInferredRelationships, String newInferredRelationships, String equivalencyReport) {
-		super();
-
-		logger = Logger.getLogger("org.ihtsdo.classifier.ClassificationRunner");
-
+		this();
 		this.module = module;
 		this.releaseDate = releaseDate;
-		this.concepts = concepts;
-		this.statedRelationships = statedRelationships;
+
+		this.concepts = new ArrayList<String>();
+		Collections.addAll(this.concepts, concepts);
+
+		this.statedRelationships = new ArrayList<String>();
+		Collections.addAll(this.statedRelationships, statedRelationships);
+
 		this.newInferredRelationships = newInferredRelationships;
 		this.equivalencyReport = equivalencyReport;
-		this.previousInferredRelationships = previousInferredRelationships;
+
+		this.previousInferredRelationships = new ArrayList<String>();
+		Collections.addAll(this.previousInferredRelationships, previousInferredRelationships);
 
 		File outputFile=new File(newInferredRelationships);
 		tempRelationshipStore=new File(outputFile.getParentFile(),"Tmp_" + outputFile.getName());
 	}
 
 	public ClassificationRunner(File config) throws ConfigurationException {
+		this();
+
 		this.config=config;
-
-		logger = Logger.getLogger("org.ihtsdo.classifier.ClassificationRunner");
-
 		getParams();
 
 		File outputFile=new File(newInferredRelationships);
@@ -143,10 +157,10 @@ public class ClassificationRunner {
 	private  String releaseDate;
 
 	/** The concepts. */
-	private  String[] concepts;
+	private  List<String> concepts;
 
 	/** The stated rels. */
-	private  String[] statedRelationships;
+	private  List<String> statedRelationships;
 
 	/** The output rels. */
 	private  String newInferredRelationships;
@@ -287,7 +301,7 @@ public class ClassificationRunner {
 			conStrList=new HashMap<String,Integer>();
 			loadConceptFilesTomap(concepts,true);
 			cEditSnoCons=null;
-			if (previousInferredRelationships!=null && previousInferredRelationships.length>0){
+			if (previousInferredRelationships != null && !previousInferredRelationships.isEmpty()){
 				loadRelationshipFilesTomap(previousInferredRelationships);
 			}
 			conStrList=null;
@@ -302,9 +316,9 @@ public class ClassificationRunner {
 
 			// WRITEBACK RESULTS
 			startTime = System.currentTimeMillis();
-			if (previousInferredRelationships==null || previousInferredRelationships.length==0){
+			if (previousInferredRelationships == null || !previousInferredRelationships.isEmpty()) {
 				writeInferredRel(cRocketRelationships);
-			}else{
+			} else {
 
 				logger.info(compareAndWriteBack(cEditRelationships, cRocketRelationships));
 
@@ -389,7 +403,6 @@ public class ClassificationRunner {
 	 * Gets the roles.
 	 *
 	 * @param parentConcepts the parent concepts
-	 * @param relationshipFile the relationship file
 	 * @return the roles
 	 * @throws Exception the exception
 	 */
@@ -417,11 +430,11 @@ public class ClassificationRunner {
 	/**
 	 * Load concept files to map.
 	 *
-	 * @param concepts2 the concept file
+	 * @param concepts the concept file
 	 * @param mapToModule the map to module
 	 * @throws java.io.IOException Signals that an I/O exception has occurred.
 	 */
-	public  void loadConceptFilesTomap(String[] concepts,boolean mapToModule )throws IOException {
+	public  void loadConceptFilesTomap(List<String> concepts, boolean mapToModule) throws IOException {
 
 		if (mapToModule){
 			conceptModule=new HashMap<Integer,String>();
@@ -467,10 +480,10 @@ public class ClassificationRunner {
 	/**
 	 * Load relationship files tomap.
 	 *
-	 * @param relationshipFile the relationship file
+	 * @param relationshipFiles the relationship file
 	 * @throws java.io.IOException Signals that an I/O exception has occurred.
 	 */
-	public  void loadRelationshipFilesTomap( String[] relationshipFiles)throws IOException {
+	public  void loadRelationshipFilesTomap(List<String> relationshipFiles)throws IOException {
 
 		String line;
 		String[] spl;
@@ -1147,22 +1160,11 @@ public class ClassificationRunner {
 		this.releaseDate=xmlConfig.getString(I_Constants.RELEASEDATE);
 		this.equivalencyReport=xmlConfig.getString(I_Constants.EQUIVALENT_CONCEPTS_OUTPUT_FILE);
 		this.newInferredRelationships=xmlConfig.getString(I_Constants.INFERRED_RELATIONSHIPS_OUTPUT_FILE);
-		List<String> conceptFiles= xmlConfig
-				.getList(I_Constants.CONCEPT_SNAPSHOT_FILES);
-		concepts=new String[conceptFiles.size()];
-		conceptFiles.toArray(concepts);
+		concepts= xmlConfig.getList(I_Constants.CONCEPT_SNAPSHOT_FILES);
 
-		List<String> relFiles= xmlConfig
-				.getList(I_Constants.RELATIONSHIP_SNAPSHOT_FILES);
-		statedRelationships=new String[relFiles.size()];
-		relFiles.toArray(statedRelationships);
+		statedRelationships = xmlConfig.getList(I_Constants.RELATIONSHIP_SNAPSHOT_FILES);
 
-		List<String> prevRelFiles= xmlConfig
-				.getList(I_Constants.PREVIOUS_INFERRED_RELATIONSHIP_FILES);
-		if (prevRelFiles!=null && prevRelFiles.size()>0){
-			previousInferredRelationships=new String[prevRelFiles.size()];
-			prevRelFiles.toArray(previousInferredRelationships);
-		}
+		previousInferredRelationships = xmlConfig.getList(I_Constants.PREVIOUS_INFERRED_RELATIONSHIP_FILES);
 		logger.info("Classification - Parameters:");
 		logger.info("Module = " + module);
 		logger.info("Release date = " + releaseDate);
