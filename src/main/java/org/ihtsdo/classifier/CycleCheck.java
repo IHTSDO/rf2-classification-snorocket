@@ -16,24 +16,13 @@
  */
 package org.ihtsdo.classifier;
 
-import java.io.BufferedReader;
-import java.io.BufferedWriter;
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.io.InputStreamReader;
-import java.io.OutputStreamWriter;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-
 import org.apache.commons.configuration.ConfigurationException;
 import org.apache.commons.configuration.XMLConfiguration;
 import org.apache.log4j.Logger;
 import org.ihtsdo.classifier.utils.I_Constants;
+
+import java.io.*;
+import java.util.*;
 
 /**
  * The Class CycleCheck.
@@ -60,10 +49,10 @@ public class CycleCheck {
 	private long ISARELATIONSHIPTYPEID=116680003l;
 
 	/** The concept file. */
-	private String[] conceptFile;
+	private List<String> conceptFilePaths;
 
 	/** The relationship file. */
-	private String[] relationshipFile;
+	private List<String> relationshipFilePaths;
 
 	/** The output file. */
 	private String outputFile;
@@ -78,27 +67,50 @@ public class CycleCheck {
 	/** The logger. */
 	private  Logger logger;
 
+	private CycleCheck() {
+		logger = Logger.getLogger(getClass());
+	}
+
 	/**
 	 * Instantiates a new cycle check.
 	 *
-	 * @param conceptFile the concept file
-	 * @param relationshipFile the relationship file
+	 * @param conceptFilePaths the concept files
+	 * @param relationshipFilePaths the relationship files
 	 * @param outputFile the output file
 	 */
-	public CycleCheck(String[] conceptFile, String[] relationshipFile,
+	public CycleCheck(List<String> conceptFilePaths, List<String> relationshipFilePaths,
 			String outputFile) {
-		super();
+		this();
+		this.conceptFilePaths = conceptFilePaths;
+		this.relationshipFilePaths = relationshipFilePaths;
+		this.outputFile = outputFile;
+	}
 
-		logger = Logger.getLogger("org.ihtsdo.classifier.CycleCheck");
-		this.conceptFile = conceptFile;
-		this.relationshipFile = relationshipFile;
+	/**
+	 * Instantiates a new cycle check.
+	 *
+	 * @param conceptFilePathArray the concept files
+	 * @param relationshipFilePathArray the relationship files
+	 * @param outputFile the output file
+	 */
+	public CycleCheck(String[] conceptFilePathArray, String[] relationshipFilePathArray,
+			String outputFile) {
+		this();
+
+		conceptFilePaths = new ArrayList<String>();
+		Collections.addAll(conceptFilePaths, conceptFilePathArray);
+
+		relationshipFilePaths = new ArrayList<String>();
+		Collections.addAll(relationshipFilePaths, relationshipFilePathArray);
+
 		this.outputFile = outputFile;
 	}
 
 	public CycleCheck(File config) throws ConfigurationException {
+		this();
+
 		this.config=config;
 
-		logger = Logger.getLogger("org.ihtsdo.classifier.CycleCheck");
 		getParams();
 	}
 
@@ -111,24 +123,17 @@ public class CycleCheck {
 			logger.info("CycleCheck - Error happened getting params file." + e.getMessage());
 			throw e;
 		}
-		List<String> conceptFiles= xmlConfig
-				.getList(I_Constants.CONCEPT_SNAPSHOT_FILES);
-		conceptFile=new String[conceptFiles.size()];
-		conceptFiles.toArray(conceptFile);
-
-		List<String> relFiles= xmlConfig
-				.getList(I_Constants.RELATIONSHIP_SNAPSHOT_FILES);
-		relationshipFile=new String[relFiles.size()];
-		relFiles.toArray(relationshipFile);
+		conceptFilePaths = xmlConfig.getList(I_Constants.CONCEPT_SNAPSHOT_FILES);
+		relationshipFilePaths = xmlConfig.getList(I_Constants.RELATIONSHIP_SNAPSHOT_FILES);
 		outputFile=xmlConfig.getString(I_Constants.DETECTED_CYCLE_OUTPUT_FILE);
 
 		logger.info("CheckCycle - Parameters:");
 		logger.info("Concept files : ");
-		for (String concept:conceptFile){
+		for (String concept: conceptFilePaths){
 			logger.info( concept);
 		}
 		logger.info("Relationship files : " );
-		for (String relFile:relationshipFile){
+		for (String relFile: relationshipFilePaths){
 			logger.info(relFile);
 		}
 		logger.info("Detected cycle output file = " + outputFile);
@@ -225,7 +230,7 @@ public class CycleCheck {
 
 		concepts=new HashMap<Long, Boolean>();
 		int count = 0;
-		for (String concept:conceptFile){
+		for (String concept: conceptFilePaths){
 			logger.info("Starting Concepts: " + concept);
 			BufferedReader br = new BufferedReader(new InputStreamReader(new FileInputStream(concept), "UTF8"));
 			try {
@@ -269,7 +274,7 @@ public class CycleCheck {
 
 		isarelationships=new HashMap<Long,List<Long>>();
 		int count = 0;
-		for (String relFile:relationshipFile){
+		for (String relFile: relationshipFilePaths){
 			logger.info("Starting Isas Relationships from: " + relFile);
 			BufferedReader br = new BufferedReader(new InputStreamReader(new FileInputStream(relFile), "UTF8"));
 			try {
