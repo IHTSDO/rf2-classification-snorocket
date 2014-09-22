@@ -144,10 +144,11 @@ public class CycleCheck {
 	 * Cycle detected.
 	 *
 	 * @return true, if successful
+	 * @throws org.ihtsdo.classifier.ClassificationException
 	 * @throws java.io.FileNotFoundException the file not found exception
 	 * @throws java.io.IOException Signals that an I/O exception has occurred.
 	 */
-	public boolean cycleDetected() throws FileNotFoundException, IOException{
+	public boolean cycleDetected() throws FileNotFoundException, IOException, ClassificationException {
 		conceptInLoop=new HashSet<Long>();
 		loadConceptsFile();
 		loadIsaRelationshipsFile();
@@ -200,7 +201,7 @@ public class CycleCheck {
 	 * @param con the con
 	 * @param desc the desc
 	 */
-	private void findCycle(Long con, List<Long> desc) {
+	private void findCycle(Long con, List<Long> desc) throws ClassificationException {
 		List<Long> parents=isarelationships.get(con);
 		if (parents!=null){
 			desc.add(con);
@@ -208,11 +209,16 @@ public class CycleCheck {
 				if (desc.contains(parent)){
 					conceptInLoop.add(parent);
 				}else{
-					if (!concepts.get(parent)){
-						findCycle(parent,desc);
-						desc.remove(parent);
-						reviewed++;
-						concepts.put(parent, true);
+					Boolean aBoolean = concepts.get(parent);
+					if (aBoolean != null) {
+						if (!aBoolean) {
+							findCycle(parent, desc);
+							desc.remove(parent);
+							reviewed++;
+							concepts.put(parent, true);
+						}
+					} else {
+						throw new ClassificationException("SCTID " + parent + " is declared as a parent of " + con + " but is missing or inactive in the concept file.");
 					}
 				}
 			}
@@ -222,7 +228,6 @@ public class CycleCheck {
 	/**
 	 * Load concepts file.
 	 *
-	 * @param conceptFile2 the concepts file
 	 * @throws java.io.FileNotFoundException the file not found exception
 	 * @throws java.io.IOException Signals that an I/O exception has occurred.
 	 */
