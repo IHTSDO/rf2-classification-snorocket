@@ -176,9 +176,7 @@ public class ClassificationRunner {
 	/**
 	 * Execute the classification.
 	 */
-	public void execute(){
-
-		try {
+	public void execute() throws IOException, ClassificationException {
 
 			logger.info("\r\n::: [Test Snorocket] execute() -- begin");
 			cEditSnoCons = new ArrayList<StringIDConcept>();
@@ -198,7 +196,7 @@ public class ClassificationRunner {
 				String errStr = "Role types exceeds 100. This will cause a memory issue. "
 						+ "Please check that role root is set to 'Concept mode attribute'";
 				logger.error(errStr);
-				throw new Exception(errStr);
+				throw new ClassificationException(errStr);
 			}
 			final int reserved = 2;
 			int cidx=reserved;
@@ -209,7 +207,7 @@ public class ClassificationRunner {
 
 			Collections.sort(cEditSnoCons);
 			if (cEditSnoCons.get(0).id <= Integer.MIN_VALUE + reserved) {
-				throw new Exception("::: SNOROCKET: TOP & BOTTOM nids NOT reserved");
+				throw new ClassificationException("::: SNOROCKET: TOP & BOTTOM nids NOT reserved");
 			}
 			for (Concept sc : cEditSnoCons) {
 				intArray[cidx++] = sc.id;
@@ -329,10 +327,6 @@ public class ClassificationRunner {
 			}
 
 			logger.info("\r\n::: *** WROTE *** LAPSED TIME =\t" + toStringLapseSec(startTime) + "\t ***");
-
-		} catch (Exception e) {
-			e.printStackTrace();
-		}
 	}
 
 	/**
@@ -340,7 +334,7 @@ public class ClassificationRunner {
 	 *
 	 * @throws Exception the exception
 	 */
-	private void consolidateRels() throws Exception {
+	private void consolidateRels() throws IOException {
 
 		FileOutputStream fos = new FileOutputStream( newInferredRelationships);
 		OutputStreamWriter osw = new OutputStreamWriter(fos,"UTF-8");
@@ -406,7 +400,7 @@ public class ClassificationRunner {
 	 * @return the roles
 	 * @throws Exception the exception
 	 */
-	private  int[] getRoles(HashSet<String> parentConcepts) throws Exception {
+	private  int[] getRoles(HashSet<String> parentConcepts) throws IOException, ClassificationException {
 		HashSet<String> roles=new HashSet<String>();
 		for (String statedRel:statedRelationships){
 			File relationshipFile=new File(statedRel);
@@ -419,7 +413,12 @@ public class ClassificationRunner {
 		int[] result=new int[roles.size()];
 		int resIdx=0;
 		for (String role:roles){
-			result[resIdx]=conStrList.get(role);
+			Integer integer = conStrList.get(role);
+			if (integer != null) {
+				result[resIdx] = integer;
+			} else {
+				throw new ClassificationException("No entry for " + role + " in conStrList.");
+			}
 			resIdx++;
 		}
 		roles=null;
@@ -483,7 +482,7 @@ public class ClassificationRunner {
 	 * @param relationshipFiles the relationship file
 	 * @throws java.io.IOException Signals that an I/O exception has occurred.
 	 */
-	public  void loadRelationshipFilesTomap(List<String> relationshipFiles)throws IOException {
+	public  void loadRelationshipFilesTomap(List<String> relationshipFiles) throws IOException, ClassificationException {
 
 		String line;
 		String[] spl;
@@ -503,12 +502,18 @@ public class ClassificationRunner {
 					Integer rg = Integer.parseInt(spl[6]);
 					Integer ty = conStrList.get(spl[7]);
 
-					if (c1 == null || c2 == null || rg == null || ty == null) {
-						logger.error("Unexpected null value c1:" + c1 + ", c2:" + c2 + ", rg:" + rg + ", ty:" + ty + ", loading line:\"" + line + "\"");
+					if (c1 == null) {
+						throw new ClassificationException("Relationship source concept missing:" + spl[4]);
+					} else if (c2 == null) {
+						throw new ClassificationException("Relationship destinationconcept missing:" + spl[5]);
+					} else if (rg == null) {
+						throw new ClassificationException("Relationship role type concept missing:" + rg);
+					} else if (ty == null) {
+						throw new ClassificationException("Relationship group concept missing:" + spl[7]);
+					} else {
+						Relationship rel = new Relationship(c1, c2, ty, rg, spl[0]);
+						cEditRelationships.add(rel);
 					}
-
-					Relationship rel = new Relationship(c1, c2, ty, rg, spl[0]);
-					cEditRelationships.add(rel);
 				}
 			}
 			rbr.close();
