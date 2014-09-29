@@ -68,4 +68,16 @@
 			<url>https://maven.ihtsdotools.org/content/repositories/thirdparty</url>
 		</repository>
 	</repositories>
+	<distributionManagement>
+		<repository>
+			<id>ihtsdo-nexus-public-releases</id>
+			<name>IHTSDO Public Nexus Releases</name>
+			<url>https://maven.ihtsdotools.org/content/repositories/releases/</url>
+		</repository>
+		<snapshotRepository>
+			<id>ihtsdo-nexus-public-snapshots</id>
+			<name>IHTSDO Public Nexus Snapshots</name>
+			<url>https://maven.ihtsdotools.org/content/repositories/snapshots/</url>
+		</snapshotRepository>
+	</distributionManagement>
 </project>
