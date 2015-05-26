@@ -516,7 +516,7 @@ public class ClassificationRunner {
 
 				spl=line.split("\t",-1);
 				if (spl[2].equals("1") && (spl[8].equals(I_Constants.INFERRED)
-						|| spl[8].equals(I_Constants.STATED))){
+						|| spl[8].equals(I_Constants.STATED) || spl[8].equals(I_Constants.ADDITIONALRELATION))){
 					final Integer c1 = conStrList.get(spl[4]);
 					final Integer c2 = conStrList.get(spl[5]);
 					final Integer rg = Integer.parseInt(spl[6]);
