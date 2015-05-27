@@ -43,7 +43,7 @@ public class Relationship implements Comparable<Object> {
     
     /** The group. */
     public int group;
-
+    
     // Relationship form a versioned "new" database perspective
     /**
      * Instantiates a new sno rel.
@@ -236,6 +236,7 @@ public class Relationship implements Comparable<Object> {
             Logger.getLogger(Relationship.class.getName()).log(Level.SEVERE, null, e);
         }
     }
+	
 } // class Relationship
 
 

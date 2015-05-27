@@ -253,9 +253,10 @@ public class ClassificationRunner {
 					rocket_123.setConceptIdxAsDefined(i + reserved);
 				}
 			}
+			
 			cEditSnoCons = null; // :MEMORY:
 
-			loadRelationshipFilesTomap(statedRelationships);
+			loadRelationshipFilesToMap(statedRelationships);
 			// ADD RELATIONSHIPS
 			Collections.sort(cEditRelationships);
 			for (final Relationship sr : cEditRelationships) {
@@ -320,7 +321,7 @@ public class ClassificationRunner {
 			loadConceptFilesTomap(concepts,true);
 			cEditSnoCons=null;
 			if (previousInferredRelationships != null && !previousInferredRelationships.isEmpty()){
-				loadRelationshipFilesTomap(previousInferredRelationships);
+				loadRelationshipFilesToMap(previousInferredRelationships);
 			}
 			conStrList=null;
 			// FILTER RELATIONSHIPS
@@ -502,42 +503,55 @@ public class ClassificationRunner {
 	 * @param relationshipFiles the relationship file
 	 * @throws java.io.IOException Signals that an I/O exception has occurred.
 	 */
-	public  void loadRelationshipFilesTomap(final List<String> relationshipFiles) throws IOException, ClassificationException {
+	private void loadRelationshipFilesToMap(final List<String> relationshipFiles) throws IOException, ClassificationException {
 
 		String line;
 		String[] spl;
-		for (final String relFile:relationshipFiles){
-			final FileInputStream rfis = new FileInputStream(relFile);
-			final InputStreamReader risr = new InputStreamReader(rfis,"UTF-8");
-			BufferedReader rbr = new BufferedReader(risr);
-			rbr.readLine();
+		for (final String relFile:relationshipFiles) {
+			 FileInputStream rfis = null;
+			 InputStreamReader risr = null;
+			 BufferedReader rbr = null;
+			try {
+				rfis = new FileInputStream(relFile);
+				risr = new InputStreamReader(rfis,"UTF-8");
+				rbr = new BufferedReader(risr);
+				
+				rbr.readLine();
+				
+					while((line=rbr.readLine())!=null){
 
-			while((line=rbr.readLine())!=null){
-
-				spl=line.split("\t",-1);
-				if (spl[2].equals("1") && (spl[8].equals(I_Constants.INFERRED)
-						|| spl[8].equals(I_Constants.STATED) || spl[8].equals(I_Constants.ADDITIONALRELATION))){
-					final Integer c1 = conStrList.get(spl[4]);
-					final Integer c2 = conStrList.get(spl[5]);
-					final Integer rg = Integer.parseInt(spl[6]);
-					final Integer ty = conStrList.get(spl[7]);
-
-					if (c1 == null) {
-						throw new ClassificationException("Relationship source concept missing:" + spl[4]);
-					} else if (c2 == null) {
-						throw new ClassificationException("Relationship destinationconcept missing:" + spl[5]);
-					} else if (rg == null) {
-						throw new ClassificationException("Relationship role type concept missing:" + rg);
-					} else if (ty == null) {
-						throw new ClassificationException("Relationship group concept missing:" + spl[7]);
-					} else {
-						final Relationship rel = new Relationship(c1, c2, ty, rg, spl[0]);
-						cEditRelationships.add(rel);
+						spl=line.split("\t",-1);
+						if (spl[2].equals("1") && (spl[8].equals(I_Constants.INFERRED)
+								|| spl[8].equals(I_Constants.STATED))) {
+							final Integer c1 = conStrList.get(spl[4]);
+							final Integer c2 = conStrList.get(spl[5]);
+							final Integer rg = Integer.parseInt(spl[6]);
+							final Integer ty = conStrList.get(spl[7]);
+							if (c1 == null) {
+								throw new ClassificationException("Relationship source concept missing:" + spl[4]);
+							} else if (c2 == null) {
+								throw new ClassificationException("Relationship destinationconcept missing:" + spl[5]);
+							} else if (rg == null) {
+								throw new ClassificationException("Relationship role type concept missing:" + rg);
+							} else if (ty == null) {
+								throw new ClassificationException("Relationship group concept missing:" + spl[7]);
+							} else {
+								final Relationship rel = new Relationship(c1, c2, ty, rg, spl[0]);
+								cEditRelationships.add(rel);
+							}
+						}
 					}
+			} finally {
+				if ( rfis != null ) {
+					rfis.close();
+				}
+				if ( risr != null ) {
+					risr.close();
+				}
+				if (rbr != null ) {
+					rbr.close();
 				}
 			}
-			rbr.close();
-			rbr=null;
 		}
 	}
 
@@ -1109,8 +1123,6 @@ public class ClassificationRunner {
 		writeRF2TypeLine(bw,rel_A.getRelId(),releaseDate,"0",moduleC1,conRefList.get(rel_A.sourceId),
 				conRefList.get(rel_A.destinationId),rel_A.group,conRefList.get(rel_A.typeId),
 				I_Constants.INFERRED, I_Constants.SOMEMODIFIER);
-
-
 	}
 
 	/**
