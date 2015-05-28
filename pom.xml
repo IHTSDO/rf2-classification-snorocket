@@ -7,7 +7,6 @@
 
     <groupId>org.ihtsdo</groupId>
     <artifactId>rf2-classification-snorocket</artifactId>
-    <version>1.0.3</version>
 
     <dependencies>
         <dependency>
@@ -80,4 +79,5 @@
 			<url>https://maven.ihtsdotools.org/content/repositories/snapshots/</url>
 		</snapshotRepository>
 	</distributionManagement>
+	<version>1.0.4-SNAPSHOT</version>
 </project>
