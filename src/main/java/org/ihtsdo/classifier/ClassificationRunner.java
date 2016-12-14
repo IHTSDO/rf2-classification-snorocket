@@ -62,6 +62,10 @@ import au.csiro.snorocket.snapi.Snorocket_123;
  */
 public class ClassificationRunner {
 
+	private static final String LINE_SEPARATOR = "\r\n";
+
+	private static final String TAB = "\t";
+
 	/** The prev inferred rels. */
 	private List<String> previousInferredRelationships;
 
@@ -69,9 +73,57 @@ public class ClassificationRunner {
 	private File tempRelationshipStore;
 
 	private File config;
+	
+	/** The edited snomed concepts. */
+	private  ArrayList<StringIDConcept> cEditSnoCons;
+
+	/** The edit snomed rels. */
+	private  ArrayList<Relationship> cEditRelationships;
+
+	/** The con ref list. */
+	HashMap<Integer, String> conRefList;
+
+	/** The con str list. */
+	HashMap<String,Integer> conStrList;
+
+	/** The logger. */
+	private final  Logger logger;
+
+	/** The isa. */
+	private  Integer isa;
+
+	/** The concept module. */
+	private  HashMap<Integer,String> conceptModule;
+
+	//params
+	/** The module. */
+	private  String module;
+
+	/** The release date. */
+	private  String releaseDate;
+
+	/** The concepts. */
+	private  List<String> concepts;
+
+	/** The stated rels. */
+	private  List<String> statedRelationships;
+
+	/** The output rels. */
+	private  String newInferredRelationships;
+
+	/** The equiv concept file. */
+	private  String equivalencyReport;
+
+	/** The retired set. */
+	private HashSet<String> retiredSet;
 
 	public ClassificationRunner() {
 		logger = Logger.getLogger("org.ihtsdo.classifier.ClassificationRunner");
+		isa = new Integer(GetDescendants.ISA_SCTID);
+		cEditSnoCons = new ArrayList<StringIDConcept>();
+		cEditRelationships = new ArrayList<Relationship>();
+		conRefList=new HashMap<Integer,String>();
+		conStrList=new HashMap<String,Integer>();
 	}
 
 	/**
@@ -145,67 +197,13 @@ public class ClassificationRunner {
 
 	}
 
-	/** The edited snomed concepts. */
-	private  ArrayList<StringIDConcept> cEditSnoCons;
-
-	/** The edit snomed rels. */
-	private  ArrayList<Relationship> cEditRelationships;
-
-	/** The con ref list. */
-	private  HashMap<Integer, String> conRefList;
-
-	/** The con str list. */
-	private  HashMap<String,Integer> conStrList;
-
-	/** The logger. */
-	private final  Logger logger;
-
-	/** The c rocket sno rels. */
-	private  ArrayList<Relationship> cRocketRelationships;
-
-	/** The isa. */
-	private  Integer isa;
-
-	/** The concept module. */
-	private  HashMap<Integer,String> conceptModule;
-
-	//params
-	/** The module. */
-	private  String module;
-
-	/** The release date. */
-	private  String releaseDate;
-
-	/** The concepts. */
-	private  List<String> concepts;
-
-	/** The stated rels. */
-	private  List<String> statedRelationships;
-
-	/** The output rels. */
-	private  String newInferredRelationships;
-
-	/** The equiv concept file. */
-	private  String equivalencyReport;
-
-	/** The retired set. */
-	private HashSet<String> retiredSet;
-
-	private XMLConfiguration xmlConfig;
-
 	/**
 	 * Execute the classification.
 	 */
 	public void execute() throws IOException, ClassificationException {
 
 			logger.info("\r\n::: [Test Snorocket] execute() -- begin");
-			cEditSnoCons = new ArrayList<StringIDConcept>();
-			cEditRelationships = new ArrayList<Relationship>();
-			conRefList=new HashMap<Integer,String>();
-			conStrList=new HashMap<String,Integer>();
-
-			loadConceptFilesTomap(concepts,false);
-
+			loadConceptFilesTomap(concepts,true);
 
 			final HashSet<String>parentConcepts=new HashSet<String>();
 			parentConcepts.add(I_Constants.ATTRIBUTE_ROOT_CONCEPT); //concept model attribute
@@ -260,7 +258,7 @@ public class ClassificationRunner {
 			// ADD RELATIONSHIPS
 			Collections.sort(cEditRelationships);
 			for (final Relationship sr : cEditRelationships) {
-				final int err = rocket_123.addRelationship(sr.sourceId, sr.typeId, sr.destinationId, sr.group);
+				final int err = rocket_123.addRelationship(sr.getSourceId(), sr.getTypeId(), sr.getDestinationId(), sr.getGroup());
 				if (err > 0) {
 					final StringBuilder sb = new StringBuilder();
 					if ((err & 1) == 1) {
@@ -298,7 +296,8 @@ public class ClassificationRunner {
 			EquivalentClasses.writeEquivConcept(pe.getEquivalentClasses(), equivalencyReport);
 
 			// GET CLASSIFER RESULTS
-			cRocketRelationships = new ArrayList<Relationship>();
+			/* The c rocket sno rels. */
+		ArrayList<Relationship> cRocketRelationships = new ArrayList<Relationship>();
 			logger.info("::: GET CLASSIFIER RESULTS...");
 			startTime = System.currentTimeMillis();
 			ProcessResults pr = new ProcessResults(cRocketRelationships);
@@ -355,7 +354,7 @@ public class ClassificationRunner {
 	 *
 	 * @throws Exception the exception
 	 */
-	private void consolidateRels() throws IOException {
+	 void consolidateRels() throws IOException {
 
 		final FileOutputStream fos = new FileOutputStream( newInferredRelationships);
 		final OutputStreamWriter osw = new OutputStreamWriter(fos,"UTF-8");
@@ -368,7 +367,7 @@ public class ClassificationRunner {
 		String line;
 		while((line=rbr.readLine())!=null){
 			bw.append(line);
-			bw.append("\r\n");
+			bw.append(LINE_SEPARATOR);
 		}
 		rbr.close();
 		rbr=null;
@@ -384,12 +383,12 @@ public class ClassificationRunner {
 			rbr.readLine();
 			while((line=rbr.readLine())!=null){
 
-				spl=line.split("\t",-1);
+				spl=line.split(TAB,-1);
 				if (retiredSet.contains(spl[0])){
 					continue;
 				}
 				bw.append(line);
-				bw.append("\r\n");
+				bw.append(LINE_SEPARATOR);
 			}
 			rbr.close();
 			rbr=null;
@@ -472,7 +471,7 @@ public class ClassificationRunner {
 			rbr.readLine();
 			while((line=rbr.readLine())!=null){
 
-				spl=line.split("\t",-1);
+				spl=line.split(TAB,-1);
 				if (!conStrList.containsKey(spl[0]) ){
 					cont++;
 					conRefList.put(cont,spl[0]);
@@ -520,7 +519,7 @@ public class ClassificationRunner {
 				
 					while((line=rbr.readLine())!=null){
 
-						spl=line.split("\t",-1);
+						spl=line.split(TAB,-1);
 						if (spl[2].equals("1") && (spl[8].equals(I_Constants.INFERRED)
 								|| spl[8].equals(I_Constants.STATED))) {
 							final Integer c1 = conStrList.get(spl[4]);
@@ -536,7 +535,7 @@ public class ClassificationRunner {
 							} else if (ty == null) {
 								throw new ClassificationException("Relationship group concept missing:" + spl[7]);
 							} else {
-								final Relationship rel = new Relationship(c1, c2, ty, rg, spl[0]);
+								final Relationship rel = new Relationship(c1, c2, ty, rg, spl[3], spl[0]);
 								cEditRelationships.add(rel);
 							}
 						}
@@ -581,7 +580,11 @@ public class ClassificationRunner {
 		 */
 		public void addRelationship(final int conceptId1, final int roleId, final int conceptId2, final int group) {
 			countRel++;
-			final Relationship relationship = new Relationship(conceptId1, conceptId2, roleId, group);
+			String moduleId=conceptModule.get(conceptId1);
+			if (moduleId==null){
+				moduleId = module;
+			}
+			final Relationship relationship = new Relationship(conceptId1, conceptId2, roleId, group, moduleId);
 			snorels.add(relationship);
 			if (countRel % 25000 == 0) {
 				// ** GUI: ProcessResults
@@ -643,25 +646,25 @@ public class ClassificationRunner {
 		BufferedWriter bw = new BufferedWriter(osw);
 
 		bw.append("id");
-		bw.append("\t");
+		bw.append(TAB);
 		bw.append("effectiveTime");
-		bw.append("\t");
+		bw.append(TAB);
 		bw.append("active");
-		bw.append("\t");
+		bw.append(TAB);
 		bw.append("moduleId");
-		bw.append("\t");
+		bw.append(TAB);
 		bw.append("sourceId");
-		bw.append("\t");
+		bw.append(TAB);
 		bw.append("destinationId");
-		bw.append("\t");
+		bw.append(TAB);
 		bw.append("relationshipGroup");
-		bw.append("\t");
+		bw.append(TAB);
 		bw.append("typeId");
-		bw.append("\t");
+		bw.append(TAB);
 		bw.append("characteristicTypeId");
-		bw.append("\t");
+		bw.append(TAB);
 		bw.append("modifierId");
-		bw.append("\r\n");
+		bw.append(LINE_SEPARATOR);
 
 		Collections.sort(infRels);
 
@@ -696,6 +699,16 @@ public class ClassificationRunner {
 		osw=null;
 		fos=null;
 	}
+	
+	private  void updateRel(final BufferedWriter bw,final Relationship prevRel, final Relationship currentRel)
+			throws  IOException {
+		
+		writeRF2TypeLine(bw,prevRel.getRelId(),releaseDate,"1",currentRel.getModuleId(),conRefList.get(currentRel.getSourceId()),
+				conRefList.get(currentRel.getDestinationId()),currentRel.getGroup(),conRefList.get(currentRel.getTypeId()),
+				I_Constants.INFERRED, I_Constants.SOMEMODIFIER);
+		//add to the retired set so that previous version is dropped.
+		retiredSet.add(prevRel.getRelId());
+	}
 
 	/**
 	 * Write rel.
@@ -706,12 +719,12 @@ public class ClassificationRunner {
 	 */
 	private  void writeRel(final BufferedWriter bw,final Relationship infRel)
 			throws  IOException {
-		String moduleC1=conceptModule.get(infRel.sourceId);
+		String moduleC1=infRel.getModuleId();
 		if (moduleC1==null){
 			moduleC1=module;
 		}
-		writeRF2TypeLine(bw,"null",releaseDate,"1",moduleC1,conRefList.get(infRel.sourceId),
-				conRefList.get(infRel.destinationId),infRel.group,conRefList.get(infRel.typeId),
+		writeRF2TypeLine(bw,"null",releaseDate,"1",moduleC1,conRefList.get(infRel.getSourceId()),
+				conRefList.get(infRel.getDestinationId()),infRel.getGroup(),conRefList.get(infRel.getTypeId()),
 				I_Constants.INFERRED, I_Constants.SOMEMODIFIER);
 
 	}
@@ -734,9 +747,8 @@ public class ClassificationRunner {
 	 */
 	public  void writeRF2TypeLine(final BufferedWriter bw, final String relationshipId, final String effectiveTime, final String active, final String moduleId, final String sourceId, final String destinationId, final int relationshipGroup, final String relTypeId,
 			final String characteristicTypeId, final String modifierId) throws IOException {
-		bw.append( relationshipId + "\t" + effectiveTime + "\t" + active + "\t" + moduleId + "\t" + sourceId + "\t" + destinationId + "\t" + relationshipGroup + "\t" + relTypeId
-				+ "\t" + characteristicTypeId + "\t" + modifierId);
-		bw.append( "\r\n");
+		bw.append(relationshipId).append(TAB).append(effectiveTime).append(TAB).append(active).append(TAB).append(moduleId).append(TAB).append(sourceId).append(TAB).append(destinationId).append(TAB).append(String.valueOf(relationshipGroup)).append(TAB).append(relTypeId).append(TAB).append(characteristicTypeId).append(TAB).append(modifierId);
+		bw.append( LINE_SEPARATOR);
 	}
 
 	/**
@@ -747,7 +759,7 @@ public class ClassificationRunner {
 	 * @return the string
 	 * @throws java.io.IOException Signals that an I/O exception has occurred.
 	 */
-	private  String compareAndWriteBack(final List<Relationship> snorelA, final List<Relationship> snorelB)
+	protected  String compareAndWriteBack(final List<Relationship> snorelA, final List<Relationship> snorelB)
 			throws  IOException {
 
 		retiredSet=new HashSet<String>();
@@ -766,25 +778,25 @@ public class ClassificationRunner {
 		BufferedWriter bw = new BufferedWriter(osw);
 
 		bw.append("id");
-		bw.append("\t");
+		bw.append(TAB);
 		bw.append("effectiveTime");
-		bw.append("\t");
+		bw.append(TAB);
 		bw.append("active");
-		bw.append("\t");
+		bw.append(TAB);
 		bw.append("moduleId");
-		bw.append("\t");
+		bw.append(TAB);
 		bw.append("sourceId");
-		bw.append("\t");
+		bw.append(TAB);
 		bw.append("destinationId");
-		bw.append("\t");
+		bw.append(TAB);
 		bw.append("relationshipGroup");
-		bw.append("\t");
+		bw.append(TAB);
 		bw.append("typeId");
-		bw.append("\t");
+		bw.append(TAB);
 		bw.append("characteristicTypeId");
-		bw.append("\t");
+		bw.append(TAB);
 		bw.append("modifierId");
-		bw.append("\r\n");
+		bw.append(LINE_SEPARATOR);
 
 
 		final long startTime = System.currentTimeMillis();
@@ -820,14 +832,14 @@ public class ClassificationRunner {
 				logger.info("::: [SnorocketMojo] compareAndWriteBack @ #\t" + countConSeen);
 			}
 
-			if (rel_A.sourceId == rel_B.sourceId) {
+			if (rel_A.getSourceId() == rel_B.getSourceId()) {
 				// COMPLETELY PROCESS ALL C1 FOR BOTH IN & OUT
 				// PROCESS C1 WITH GROUP == 0
-				final int thisC1 = rel_A.sourceId;
+				final int thisC1 = rel_A.getSourceId();
 
 				// PROCESS WHILE BOTH HAVE GROUP 0
-				while (rel_A.sourceId == thisC1 && rel_B.sourceId == thisC1 && rel_A.group == 0
-						&& rel_B.group == 0 && !done_A && !done_B) {
+				while (rel_A.getSourceId() == thisC1 && rel_B.getSourceId() == thisC1 && rel_A.getGroup() == 0
+						&& rel_B.getGroup() == 0 && !done_A && !done_B) {
 
 					// PROGESS GROUP ZERO
 					switch (compareSnoRel(rel_A, rel_B)) {
@@ -836,8 +848,11 @@ public class ClassificationRunner {
 						countA_Total++;
 						countB_Total++;
 						countSame++;
-						// NOTHING TO WRITE IN THIS CASE
-						if (rel_A.typeId == isa) {
+						//check whether module id is changed
+						if (!rel_A.getModuleId().equals(rel_B.getModuleId())) {
+							updateRel(bw, rel_A, rel_B);
+						} 
+						if (rel_A.getTypeId() == isa) {
 							countSameISA++;
 						}
 						if (itA.hasNext()) {
@@ -856,7 +871,7 @@ public class ClassificationRunner {
 						// WRITEBACK REL_B (Classifier Results) AS CURRENT
 						countB_Diff++;
 						countB_Total++;
-						if (rel_B.typeId == isa) {
+						if (rel_B.getTypeId() == isa) {
 							countB_DiffISA++;
 						}
 						writeRel(bw,rel_B);
@@ -873,7 +888,7 @@ public class ClassificationRunner {
 						// GATHER STATISTICS
 						countA_Diff++;
 						countA_Total++;
-						if (rel_A.typeId == isa) {
+						if (rel_A.getTypeId() == isa) {
 							countA_DiffISA++;
 						}
 						writeBackRetired(bw,rel_A);
@@ -888,11 +903,11 @@ public class ClassificationRunner {
 				}
 
 				// REMAINDER LIST_A GROUP 0 FOR C1
-				while (rel_A.sourceId == thisC1 && rel_A.group == 0 && !done_A) {
+				while (rel_A.getSourceId() == thisC1 && rel_A.getGroup() == 0 && !done_A) {
 
 					countA_Diff++;
 					countA_Total++;
-					if (rel_A.typeId == isa) {
+					if (rel_A.getTypeId() == isa) {
 						countA_DiffISA++;
 					}
 					writeBackRetired(bw,rel_A);
@@ -905,10 +920,10 @@ public class ClassificationRunner {
 				}
 
 				// REMAINDER LIST_B GROUP 0 FOR C1
-				while (rel_B.sourceId == thisC1 && rel_B.group == 0 && !done_B) {
+				while (rel_B.getSourceId() == thisC1 && rel_B.getGroup() == 0 && !done_B) {
 					countB_Diff++;
 					countB_Total++;
-					if (rel_B.typeId == isa) {
+					if (rel_B.getTypeId() == isa) {
 						countB_DiffISA++;
 					}
 					writeRel(bw,rel_B);
@@ -928,15 +943,15 @@ public class ClassificationRunner {
 
 				// SEGMENT GROUPS IN LIST_A
 				int prevGroup = Integer.MIN_VALUE;
-				while (rel_A.sourceId == thisC1 && !done_A) {
-					if (rel_A.group != prevGroup) {
+				while (rel_A.getSourceId() == thisC1 && !done_A) {
+					if (rel_A.getGroup() != prevGroup) {
 						groupA = new RelationshipGroup();
 						groupList_A.add(groupA);
 					}
 
 					groupA.add(rel_A);
 
-					prevGroup = rel_A.group;
+					prevGroup = rel_A.getGroup();
 					if (itA.hasNext()) {
 						rel_A = itA.next();
 					} else {
@@ -945,15 +960,15 @@ public class ClassificationRunner {
 				}
 				// SEGMENT GROUPS IN LIST_B
 				prevGroup = Integer.MIN_VALUE;
-				while (rel_B.sourceId == thisC1 && !done_B) {
-					if (rel_B.group != prevGroup) {
+				while (rel_B.getSourceId() == thisC1 && !done_B) {
+					if (rel_B.getGroup() != prevGroup) {
 						groupB = new RelationshipGroup();
 						groupList_B.add(groupB);
 					}
 
 					groupB.add(rel_B);
 
-					prevGroup = rel_B.group;
+					prevGroup = rel_B.getGroup();
 					if (itB.hasNext()) {
 						rel_B = itB.next();
 					} else {
@@ -981,10 +996,10 @@ public class ClassificationRunner {
 				if (groupList_B.size() > 0) {
 					groupList_NotEqual = groupList_B.whichNotEqual(groupList_A);
 					for (final RelationshipGroup sg : groupList_NotEqual) {
-						if (sg.get(0).group != 0) {
+						if (sg.get(0).getGroup() != 0) {
 							rgNum = nextRoleGroupNumber(groupList_A, rgNum);
 							for (final Relationship sr_B : sg) {
-								sr_B.group = rgNum;
+								sr_B.setGroup(rgNum);
 								writeRel(bw,sr_B);
 							}
 						} else {
@@ -996,14 +1011,14 @@ public class ClassificationRunner {
 					countB_Total += groupList_A.countRels();
 					countB_Diff += groupList_NotEqual.countRels();
 				}
-			} else if (rel_A.sourceId > rel_B.sourceId) {
+			} else if (rel_A.getSourceId() > rel_B.getSourceId()) {
 				// CASE 2: LIST_B HAS CONCEPT NOT IN LIST_A
 				// COMPLETELY *ADD* ALL THIS C1 FOR REL_B AS NEW, CURRENT
-				final int thisC1 = rel_B.sourceId;
-				while (rel_B.sourceId == thisC1) {
+				final int thisC1 = rel_B.getSourceId();
+				while (rel_B.getSourceId() == thisC1) {
 					countB_Diff++;
 					countB_Total++;
-					if (rel_B.typeId == isa) {
+					if (rel_B.getTypeId() == isa) {
 						countB_DiffISA++;
 					}
 					writeRel(bw,rel_B);
@@ -1018,11 +1033,11 @@ public class ClassificationRunner {
 			} else {
 				// CASE 3: LIST_A HAS CONCEPT NOT IN LIST_B
 				// COMPLETELY *RETIRE* ALL THIS C1 FOR REL_A
-				final int thisC1 = rel_A.sourceId;
-				while (rel_A.sourceId == thisC1) {
+				final int thisC1 = rel_A.getSourceId();
+				while (rel_A.getSourceId() == thisC1) {
 					countA_Diff++;
 					countA_Total++;
-					if (rel_A.typeId == isa) {
+					if (rel_A.getTypeId() == isa) {
 						countA_DiffISA++;
 					}
 					writeBackRetired(bw,rel_A);
@@ -1047,7 +1062,7 @@ public class ClassificationRunner {
 		while (!done_A) {
 			countA_Diff++;
 			countA_Total++;
-			if (rel_A.typeId == isa) {
+			if (rel_A.getTypeId() == isa) {
 				countA_DiffISA++;
 			}
 			// COMPLETELY UPDATE ALL REMAINING REL_A AS RETIRED
@@ -1063,7 +1078,7 @@ public class ClassificationRunner {
 		while (!done_B) {
 			countB_Diff++;
 			countB_Total++;
-			if (rel_B.typeId == isa) {
+			if (rel_B.getTypeId() == isa) {
 				countB_DiffISA++;
 			}
 			// COMPLETELY UPDATE ALL REMAINING REL_B AS NEW, CURRENT
@@ -1087,7 +1102,7 @@ public class ClassificationRunner {
 		final long lapseTime = System.currentTimeMillis() - startTime;
 		s.append("\r\n::: [Time] Sort/Compare Input & Output: \t").append(lapseTime);
 		s.append("\t(mS)\t").append(((float) lapseTime / 1000) / 60).append("\t(min)");
-		s.append("\r\n");
+		s.append(LINE_SEPARATOR);
 		s.append("\r\n::: ");
 		s.append("\r\n::: countSame:     \t").append(countSame);
 		s.append("\r\n::: countSameISA:  \t").append(countSameISA);
@@ -1113,15 +1128,13 @@ public class ClassificationRunner {
 	 */
 	private  void writeBackRetired(final BufferedWriter bw,final Relationship rel_A)
 			throws IOException {
-
 		retiredSet.add(rel_A.getRelId());
-
-		String moduleC1=conceptModule.get(rel_A.sourceId);
+		String moduleC1= rel_A.getModuleId();
 		if (moduleC1==null){
-			moduleC1=module;
+			moduleC1=conceptModule.get(rel_A.getSourceId());
 		}
-		writeRF2TypeLine(bw,rel_A.getRelId(),releaseDate,"0",moduleC1,conRefList.get(rel_A.sourceId),
-				conRefList.get(rel_A.destinationId),rel_A.group,conRefList.get(rel_A.typeId),
+		writeRF2TypeLine(bw,rel_A.getRelId(),releaseDate,"0",moduleC1,conRefList.get(rel_A.getSourceId()),
+				conRefList.get(rel_A.getDestinationId()),rel_A.getGroup(),conRefList.get(rel_A.getTypeId()),
 				I_Constants.INFERRED, I_Constants.SOMEMODIFIER);
 	}
 
@@ -1133,18 +1146,18 @@ public class ClassificationRunner {
 	 * @return the int
 	 */
 	private static int compareSnoRel(final Relationship inR, final Relationship outR) {
-		if ((inR.sourceId == outR.sourceId) && (inR.group == outR.group) && (inR.typeId == outR.typeId)
-				&& (inR.destinationId == outR.destinationId)) {
+		if ((inR.getSourceId() == outR.getSourceId()) && (inR.getGroup() == outR.getGroup()) && (inR.getTypeId() == outR.getTypeId())
+				&& (inR.getDestinationId() == outR.getDestinationId())) {
 			return 1; // SAME
-		} else if (inR.sourceId > outR.sourceId) {
+		} else if (inR.getSourceId() > outR.getSourceId()) {
 			return 2; // ADDED
-		} else if ((inR.sourceId == outR.sourceId) && (inR.group > outR.group)) {
+		} else if ((inR.getSourceId() == outR.getSourceId()) && (inR.getGroup() > outR.getGroup())) {
 			return 2; // ADDED
-		} else if ((inR.sourceId == outR.sourceId) && (inR.group == outR.group)
-				&& (inR.typeId > outR.typeId)) {
+		} else if ((inR.getSourceId() == outR.getSourceId()) && (inR.getGroup() == outR.getGroup())
+				&& (inR.getTypeId() > outR.getTypeId())) {
 			return 2; // ADDED
-		} else if ((inR.sourceId == outR.sourceId) && (inR.group == outR.group)
-				&& (inR.typeId == outR.typeId) && (inR.destinationId > outR.destinationId)) {
+		} else if ((inR.getSourceId() == outR.getSourceId()) && (inR.getGroup() == outR.getGroup())
+				&& (inR.getTypeId() == outR.getTypeId()) && (inR.getDestinationId() > outR.getDestinationId())) {
 			return 2; // ADDED
 		} else {
 			return 3; // DROPPED
@@ -1167,12 +1180,12 @@ public class ClassificationRunner {
 
 			boolean exists = false;
 			for (int i = 0; i < sglSize; i++) {
-				if (sgl.get(i).get(0).group == testNum) {
+				if (sgl.get(i).get(0).getGroup() == testNum) {
 					exists = true;
 				}
 			}
 
-			if (exists == false) {
+			if (!exists) {
 				return testNum;
 			} else {
 				testNum++;
@@ -1186,17 +1199,18 @@ public class ClassificationRunner {
 	@SuppressWarnings("unchecked")
 	private void getParams() throws ConfigurationException  {
 
+		XMLConfiguration xmlConfig;
 		try {
-			xmlConfig=new XMLConfiguration(config);
+			xmlConfig =new XMLConfiguration(config);
 		} catch (final ConfigurationException e) {
 			logger.info("ClassificationRunner - Error happened getting params file." + e.getMessage());
 			throw e;
 		}
 
 		this.module = xmlConfig.getString(I_Constants.MODULEID);
-		this.releaseDate=xmlConfig.getString(I_Constants.RELEASEDATE);
-		this.equivalencyReport=xmlConfig.getString(I_Constants.EQUIVALENT_CONCEPTS_OUTPUT_FILE);
-		this.newInferredRelationships=xmlConfig.getString(I_Constants.INFERRED_RELATIONSHIPS_OUTPUT_FILE);
+		this.releaseDate= xmlConfig.getString(I_Constants.RELEASEDATE);
+		this.equivalencyReport= xmlConfig.getString(I_Constants.EQUIVALENT_CONCEPTS_OUTPUT_FILE);
+		this.newInferredRelationships= xmlConfig.getString(I_Constants.INFERRED_RELATIONSHIPS_OUTPUT_FILE);
 		concepts= xmlConfig.getList(I_Constants.CONCEPT_SNAPSHOT_FILES);
 
 		statedRelationships = xmlConfig.getList(I_Constants.RELATIONSHIP_SNAPSHOT_FILES);

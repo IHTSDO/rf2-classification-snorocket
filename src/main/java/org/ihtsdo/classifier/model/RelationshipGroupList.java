@@ -58,7 +58,7 @@ public class RelationshipGroupList extends ArrayList<RelationshipGroup> {
 
         while (it.hasNext()) {
             Relationship relationshipB = it.next();
-            if (relationshipB.group == relationshipA.group) {
+            if (relationshipB.getGroup() == relationshipA.getGroup()) {
                 group.add(relationshipB); // ADD TO SAME GROUP
             } else {
                 group = new RelationshipGroup(); // CREATE NEW GROUP

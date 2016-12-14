@@ -94,14 +94,14 @@ public class RelationshipGroup extends ArrayList<Relationship> {
             public int compare(Relationship o1, Relationship o2) {
                 int thisMore = 1;
                 int thisLess = -1;
-                if (o1.typeId > o2.typeId) {
+                if (o1.getTypeId() > o2.getTypeId()) {
                     return thisMore;
-                } else if (o1.typeId < o2.typeId) {
+                } else if (o1.getTypeId() < o2.getTypeId()) {
                     return thisLess;
                 } else {
-                    if (o1.destinationId > o2.destinationId) {
+                    if (o1.getDestinationId() > o2.getDestinationId()) {
                         return thisMore;
-                    } else if (o1.destinationId < o2.destinationId) {
+                    } else if (o1.getDestinationId() < o2.getDestinationId()) {
                         return thisLess;
                     } else {
                         return 0; // EQUAL
@@ -125,14 +125,14 @@ public class RelationshipGroup extends ArrayList<Relationship> {
             public int compare(Relationship o1, Relationship o2) {
                 int thisMore = 1;
                 int thisLess = -1;
-                if (o1.typeId > o2.typeId) {
+                if (o1.getTypeId() > o2.getTypeId()) {
                     return thisMore;
-                } else if (o1.typeId < o2.typeId) {
+                } else if (o1.getTypeId() < o2.getTypeId()) {
                     return thisLess;
                 } else {
-                    if (o1.destinationId > o2.destinationId) {
+                    if (o1.getDestinationId() > o2.getDestinationId()) {
                         return thisMore;
-                    } else if (o1.destinationId < o2.destinationId) {
+                    } else if (o1.getDestinationId() < o2.getDestinationId()) {
                         return thisLess;
                     } else {
                         return 0; // EQUAL
@@ -165,7 +165,7 @@ public class RelationshipGroup extends ArrayList<Relationship> {
         int i = 0;
         boolean isSame = true;
         while (i < sizeA) {
-            if (this.get(i).typeId != roleGroupB.get(i).typeId || this.get(i).destinationId != roleGroupB.get(i).destinationId) {
+            if (this.get(i).getTypeId() != roleGroupB.get(i).getTypeId() || this.get(i).getDestinationId() != roleGroupB.get(i).getDestinationId()) {
                 isSame = false;
                 break;
             }
