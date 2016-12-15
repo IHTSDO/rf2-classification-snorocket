@@ -453,7 +453,7 @@ public class ClassificationRunner {
 	 * @param mapToModule the map to module
 	 * @throws java.io.IOException Signals that an I/O exception has occurred.
 	 */
-	public  void loadConceptFilesTomap(final List<String> concepts, final boolean mapToModule) throws IOException {
+	public void loadConceptFilesTomap(final List<String> concepts, final boolean mapToModule) throws IOException {
 
 		if (mapToModule){
 			conceptModule=new HashMap<Integer,String>();
@@ -478,11 +478,7 @@ public class ClassificationRunner {
 					conStrList.put(spl[0],cont);
 
 					if (mapToModule){
-						if (spl[0].equals(I_Constants.META_SCTID)){
-							conceptModule.put(cont, module);
-						}else{
-							conceptModule.put(cont, spl[3]);
-						}
+						conceptModule.put(cont, spl[3]);
 					}
 					if (spl[2].equals("1") ){
 						definitionStatusId = (spl[4].equals(I_Constants.FULLY_DEFINED));
