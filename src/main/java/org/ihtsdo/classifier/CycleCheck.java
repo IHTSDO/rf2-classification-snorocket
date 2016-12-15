@@ -46,7 +46,7 @@ public class CycleCheck {
 	private HashSet<Long> conceptInLoop;
 
 	/** The isa relationship typeid. */
-	private long ISARELATIONSHIPTYPEID=116680003l;
+	private long ISARELATIONSHIPTYPEID=116680003L;
 
 	/** The concept file. */
 	private List<String> conceptFilePaths;

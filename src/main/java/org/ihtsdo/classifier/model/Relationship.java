@@ -30,19 +30,21 @@ import java.util.logging.Logger;
 public class Relationship implements Comparable<Object> {
 
     /** The relationship Id. */
-    public String relationshipId;
+    private String relationshipId;
     
     /** The source Id. */
-    public int sourceId; 
+    private int sourceId; 
     
     /** The destination Id. */
-    public int destinationId;
+    private int destinationId;
     
     /** The type id. */
-    public int typeId;
+    private int typeId;
     
     /** The group. */
-    public int group;
+    private int group;
+    
+    private String moduleId;
     
     // Relationship form a versioned "new" database perspective
     /**
@@ -54,11 +56,12 @@ public class Relationship implements Comparable<Object> {
      * @param group the group
      * @param relationshipId the rel nid
      */
-    public Relationship(int sourceId, int destinationId, int roleTypeId, int group, String relationshipId) {
+    public Relationship(int sourceId, int destinationId, int roleTypeId, int group, String moduleId, String relationshipId) {
         this.sourceId = sourceId;
-        this.destinationId = destinationId;
-        this.typeId = roleTypeId;
+        this.destinationId=destinationId;
+        this.typeId=roleTypeId;
         this.group = group;
+        this.moduleId = moduleId;
         this.relationshipId = relationshipId;
     }
 
@@ -71,12 +74,13 @@ public class Relationship implements Comparable<Object> {
      * @param roleTypeId the role type id
      * @param group the group
      */
-    public Relationship(int sourceId, int destinationId, int roleTypeId, int group) {
-        this.sourceId = sourceId;
-        this.destinationId = destinationId;
-        this.typeId = roleTypeId;
-        this.group = group;
-        this.relationshipId = "null";
+    public Relationship(int sourceId, int destinationId, int roleTypeId, int group, String moduleId) {
+    	  this.sourceId = sourceId;
+          this.destinationId=destinationId;
+          this.typeId=roleTypeId;
+          this.group = group;
+          this.moduleId = moduleId;
+          this.relationshipId = "null";
     }
 
     /**
@@ -88,15 +92,6 @@ public class Relationship implements Comparable<Object> {
         return relationshipId;
     }
 
-    /**
-     * Sets the nid.
-     *
-     * @param nid the new nid
-     */
-    public void setNid(String nid) {
-        this.relationshipId = nid;
-    }
-
     // default sort order [c1-group-type-c2]
     /* (non-Javadoc)
      * @see java.lang.Comparable#compareTo(java.lang.Object)
@@ -105,24 +100,24 @@ public class Relationship implements Comparable<Object> {
         Relationship other = (Relationship) o;
         int thisMore = 1;
         int thisLess = -1;
-        if (this.sourceId > other.sourceId) {
+        if (this.getSourceId() > other.getSourceId()) {
             return thisMore;
-        } else if (this.sourceId < other.sourceId) {
+        } else if (this.getSourceId() < other.getSourceId()) {
             return thisLess;
         } else {
-            if (this.group > other.group) {
+            if (this.getGroup() > other.getGroup()) {
                 return thisMore;
-            } else if (this.group < other.group) {
+            } else if (this.getGroup() < other.getGroup()) {
                 return thisLess;
             } else {
-                if (this.typeId > other.typeId) {
+                if (this.getTypeId() > other.getTypeId()) {
                     return thisMore;
-                } else if (this.typeId < other.typeId) {
+                } else if (this.getTypeId() < other.getTypeId()) {
                     return thisLess;
                 } else {
-                    if (this.destinationId > other.destinationId) {
+                    if (this.getDestinationId() > other.getDestinationId()) {
                         return thisMore;
-                    } else if (this.destinationId < other.destinationId) {
+                    } else if (this.getDestinationId() < other.getDestinationId()) {
                         return thisLess;
                     } else {
                         return 0; // this == received
@@ -138,11 +133,11 @@ public class Relationship implements Comparable<Object> {
     @Override
     public String toString() {
         StringBuilder sb = new StringBuilder();
-        sb.append(sourceId);
+        sb.append(getSourceId());
         sb.append(": ");
-        sb.append(typeId);
+        sb.append(getTypeId());
         sb.append(": ");
-        sb.append(destinationId);
+        sb.append(getDestinationId());
         return sb.toString();
     }
 
@@ -153,7 +148,7 @@ public class Relationship implements Comparable<Object> {
      */
     public String toStringC1() {
        
-        return Integer.toString(sourceId);
+        return Integer.toString(getSourceId());
     }
 
     /**
@@ -163,7 +158,7 @@ public class Relationship implements Comparable<Object> {
      */
     public String toStringType() {
        
-        return Integer.toString(typeId);
+        return Integer.toString(getTypeId());
     }
 
     /**
@@ -173,7 +168,7 @@ public class Relationship implements Comparable<Object> {
      */
     public String toStringC2() {
        
-        return Integer.toString(destinationId);
+        return Integer.toString(getDestinationId());
     }
 
     /**
@@ -182,7 +177,7 @@ public class Relationship implements Comparable<Object> {
      * @return the string
      */
     public String toStringGroup() {
-        return Integer.toString(group);
+        return Integer.toString(getGroup());
     }
 
 
@@ -209,7 +204,7 @@ public class Relationship implements Comparable<Object> {
             BufferedWriter bw = new BufferedWriter(new FileWriter(fName));
             if (format == 1) { // RAW NIDs
                 for (Relationship sr : srl) {
-                    bw.write(sr.sourceId + "\t" + sr.typeId + "\t" + sr.destinationId + "\t" + sr.group + "\r\n");
+                    bw.write(sr.getSourceId() + "\t" + sr.getTypeId() + "\t" + sr.getDestinationId() + "\t" + sr.getGroup() + "\r\n");
                 }
             }
             
@@ -221,10 +216,10 @@ public class Relationship implements Comparable<Object> {
                 for (Relationship sr : srl) {
                     // RELATIONSHIPID + CONCEPTID1 + RELATIONSHIPTYPE +
                     // CONCEPTID2
-                    bw.write("#" + index + "\t" + sr.sourceId + "\t" + sr.typeId + "\t" + sr.destinationId
+                    bw.write("#" + index + "\t" + sr.getSourceId() + "\t" + sr.getTypeId() + "\t" + sr.getDestinationId()
                             + "\t");
                     // CHARACTERISTICTYPE + REFINABILITY + RELATIONSHIPGROUP
-                    bw.write("NA\t" + "NA\t" + sr.group + "\r\n");
+                    bw.write("NA\t" + "NA\t" + sr.getGroup() + "\r\n");
                     index += 1;
                 }
             }
@@ -236,7 +231,55 @@ public class Relationship implements Comparable<Object> {
             Logger.getLogger(Relationship.class.getName()).log(Level.SEVERE, null, e);
         }
     }
-	
-} // class Relationship
+
+	/**
+	 * @return the sourceId
+	 */
+	public int getSourceId() {
+		return sourceId;
+	}
+
+	/**
+	 * @return the destinationId
+	 */
+	public int getDestinationId() {
+		return destinationId;
+	}
+
+	/**
+	 * @return the typeId
+	 */
+	public int getTypeId() {
+		return typeId;
+	}
+
+	/**
+	 * @return the group
+	 */
+	public int getGroup() {
+		return group;
+	}
+
+	/**
+	 * @return the moduleId
+	 */
+	public String getModuleId() {
+		return moduleId;
+	}
+
+	/**
+	 * @param role group number
+	 */
+	public void setGroup(int rgNum) {
+		this.group = rgNum;
+	}
+
+	/**
+	 * @param moduleId
+	 */
+	public void setModuleId(String moduleId) {
+		this.moduleId = moduleId;
+	}
+} 
 
 
