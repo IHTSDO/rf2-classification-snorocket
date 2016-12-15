@@ -759,7 +759,7 @@ public class ClassificationRunner {
 	 * @return the string
 	 * @throws java.io.IOException Signals that an I/O exception has occurred.
 	 */
-	protected  String compareAndWriteBack(final List<Relationship> snorelA, final List<Relationship> snorelB)
+	 String compareAndWriteBack(final List<Relationship> snorelA, final List<Relationship> snorelB)
 			throws  IOException {
 
 		retiredSet=new HashSet<String>();

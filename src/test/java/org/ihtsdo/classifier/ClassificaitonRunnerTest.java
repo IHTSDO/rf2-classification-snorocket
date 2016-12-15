@@ -27,9 +27,10 @@ public class ClassificaitonRunnerTest {
 	@Before
 	public void setUp() throws IOException {
 		classificationResult = File.createTempFile("classification", ".txt");
-		List<String> conceptFiles = Arrays.asList(ClassLoader.getSystemResource("sct2_Concept_Snapshot_INT_20160731.txt").getPath().toString());
-		List<String> statedRelationshipFiles = Arrays.asList(ClassLoader.getSystemResource("sct2_StatedRelationship_Snapshot_20160731.txt").getPath().toString());
-		List<String> previousInferredFiles = Arrays.asList(ClassLoader.getSystemResource("sct2_Relationship_Snapshot_20160131.txt").getPath().toString());
+		ClassLoader classLoader = ClassificaitonRunnerTest.class.getClassLoader();
+		List<String> conceptFiles = Arrays.asList(classLoader.getResource("sct2_Concept_Snapshot_INT_20160731.txt").getPath().toString());
+		List<String> statedRelationshipFiles = Arrays.asList(classLoader.getResource("sct2_StatedRelationship_Snapshot_20160731.txt").getPath().toString());
+		List<String> previousInferredFiles = Arrays.asList(classLoader.getResource("sct2_Relationship_Snapshot_20160131.txt").getPath().toString());
 		equivanceReortFile = File.createTempFile("equivalence", ".txt");
 		runner = new ClassificationRunner(coreModuleSctid, RELEASE_DATE, conceptFiles, statedRelationshipFiles, previousInferredFiles,
 				classificationResult.getAbsolutePath(), equivanceReortFile.getAbsolutePath());
