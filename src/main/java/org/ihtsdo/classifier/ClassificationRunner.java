@@ -452,6 +452,12 @@ public class ClassificationRunner {
 	 * @param concepts the concept file
 	 * @param mapToModule the map to module
 	 * @throws java.io.IOException Signals that an I/O exception has occurred.
+	 * Note regarding overrides component model concept module (JIRA ISRS-113)
+	 * "The way the 2 modules were setup in the first place was that the Core was dependent on the Component Model module.  
+	 * This meant that you could distribute the Component Model module standalone, but NOT the Core on its own.
+	 * Therefore all of the components of this Concept (which is the Component Model module concept itself) reside correctly in the Component Model module. 
+	 * However, the Relationship CANNOT reside inside the Component Model module, as if this module is then distributed standalone the relationship would be a broken one,
+	 * as the concept it relates to will be inside the Core and not part of the Component Model module.
 	 */
 	public void loadConceptFilesTomap(final List<String> concepts, final boolean mapToModule) throws IOException {
 
@@ -478,7 +484,12 @@ public class ClassificationRunner {
 					conStrList.put(spl[0],cont);
 
 					if (mapToModule){
-						conceptModule.put(cont, spl[3]);
+						if (spl[0].equals(I_Constants.META_SCTID)){
+							//overrides the module id for component module concept see detail explanation in ISRS-113
+							conceptModule.put(cont, module);
+						}else{
+							conceptModule.put(cont, spl[3]);
+						}
 					}
 					if (spl[2].equals("1") ){
 						definitionStatusId = (spl[4].equals(I_Constants.FULLY_DEFINED));

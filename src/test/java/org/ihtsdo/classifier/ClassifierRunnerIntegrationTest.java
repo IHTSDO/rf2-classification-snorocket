@@ -14,7 +14,6 @@ public class ClassifierRunnerIntegrationTest {
 	private static final String CORE_MODULE_ID = "900000000000207008";
 	
 	private String effectiveTimeSnomedFormat;
-	private String rootDir;
 	private List<String> localConceptFilePaths;
 	private List<String> localStatedRelationshipFilePaths;
 	private List<String> previousInferredRelationshipFilePaths;
@@ -24,7 +23,7 @@ public class ClassifierRunnerIntegrationTest {
 	@Before
 	public void setUp() {
 		effectiveTimeSnomedFormat ="20170131";
-		rootDir = "/Users/mchu/Downloads/classifierTest/";
+		String rootDir = "/Users/mchu/Downloads/classifierTest/";
 		localConceptFilePaths = new ArrayList<String>();
 		localConceptFilePaths.add(rootDir + "xsct2_Concept_Snapshot_INT_20170131.txt");
 		localStatedRelationshipFilePaths = new ArrayList<String>();
