@@ -79,5 +79,5 @@
 			<url>https://maven.ihtsdotools.org/content/repositories/snapshots/</url>
 		</snapshotRepository>
 	</distributionManagement>
-	<version>1.0.4-SNAPSHOT</version>
+	<version>1.0.4</version>
 </project>
