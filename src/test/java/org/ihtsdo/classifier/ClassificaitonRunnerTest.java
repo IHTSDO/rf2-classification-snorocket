@@ -55,15 +55,49 @@ public class ClassificaitonRunnerTest {
 		assertTrue(equivanceReortFile.length() == 0);
 		runner.consolidateRels();
 		List<String> relationships = getRelationshipsFromResult(classificationResult);
-		assertTrue(relationships.size() > 1);
+		assertTrue(relationships.size() == 1);
 		String expected = "6580269026\t20160731\t1\t900000000000012004\t718291003\t900000000000445007\t0\t116680003\t900000000000011006\t900000000000451002";
-		assertEquals(expected,relationships.get(1));
+		assertEquals(expected,relationships.get(0));
+	}
+	
+	
+	
+	@Test
+	public void testRoleGroupChange() throws IOException {
+		runner.conRefList = new HashMap<Integer, String>();
+		runner.conStrList = new HashMap<String, Integer>();
+		runner.conRefList.put(1, "718291003");
+		runner.conRefList.put(2, "900000000000445007");
+		runner.conRefList.put(3, "116680003");
+		runner.conRefList.put(4, "42685002");
+		runner.conRefList.put(5, "47538007");
+		runner.conStrList.put("718291003", 1);
+		runner.conStrList.put("900000000000445007", 2);
+		runner.conStrList.put("116680003", 3);
+		runner.conStrList.put("42685002", 4);
+		runner.conStrList.put("47538007", 5);
+		List<Relationship> snorelA = Arrays.asList( new Relationship(1, 2, 3, 0, coreModuleSctid),new Relationship(1, 4, 3, 1, coreModuleSctid));
+		List<Relationship> snorelB = Arrays.asList( new Relationship(1, 2, 3, 0, coreModuleSctid),new Relationship(1, 5, 3, 1, coreModuleSctid));
+		String result = runner.compareAndWriteBack(snorelA, snorelB);
+		System.out.println(result);
+		assertTrue(equivanceReortFile.length() == 0);
+		runner.consolidateRels();
+		List<String> relationships = getRelationshipsFromResult(classificationResult);
+		assertTrue(relationships.size() == 3);
+		String rel1 = "null	20160731	0	900000000000207008	718291003	42685002	1	116680003	900000000000011006	900000000000451002";
+		String rel2 = "null	20160731	1	900000000000207008	718291003	47538007	2	116680003	900000000000011006	900000000000451002";
+		String rel3 = "6580269026	20160131	1	900000000000207008	718291003	900000000000445007	0	116680003	900000000000011006	900000000000451002";
+		assertEquals(rel1,relationships.get(0));
+		assertEquals(rel2,relationships.get(1));
+		assertEquals(rel3,relationships.get(2));
+
 	}
 
 	private List<String> getRelationshipsFromResult(File classificationResult) throws FileNotFoundException, IOException {
 		List<String> result = new ArrayList<String>();
 		try (BufferedReader reader = new BufferedReader(new FileReader(classificationResult))) {
-			String line = null;
+			//header line
+			String line = reader.readLine();
 			while ((line=reader.readLine()) != null) {
 				result.add(line);
 			}
