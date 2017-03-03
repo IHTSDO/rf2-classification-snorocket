@@ -337,11 +337,8 @@ public class ClassificationRunner {
 			if (previousInferredRelationships == null || previousInferredRelationships.isEmpty()) {
 				writeInferredRel(cRocketRelationships);
 			} else {
-
 				logger.info(compareAndWriteBack(cEditRelationships, cRocketRelationships));
-
 				logger.info("\r\n::: *** WRITEBACK *** LAPSED TIME =\t" + toStringLapseSec(startTime) + "\t ***");
-
 				consolidateRels();
 
 			}
@@ -382,7 +379,6 @@ public class ClassificationRunner {
 			rbr = new BufferedReader(risr);
 			rbr.readLine();
 			while((line=rbr.readLine())!=null){
-
 				spl=line.split(TAB,-1);
 				if (retiredSet.contains(spl[0])){
 					continue;
@@ -476,7 +472,6 @@ public class ClassificationRunner {
 			BufferedReader rbr = new BufferedReader(risr);
 			rbr.readLine();
 			while((line=rbr.readLine())!=null){
-
 				spl=line.split(TAB,-1);
 				if (!conStrList.containsKey(spl[0]) ){
 					cont++;
@@ -486,7 +481,7 @@ public class ClassificationRunner {
 					if (mapToModule){
 						if (spl[0].equals(I_Constants.META_SCTID)){
 							//overrides the module id for component module concept see detail explanation in ISRS-113
-							conceptModule.put(cont, module);
+							conceptModule.put(cont, I_Constants.CORE_MODULE_ID);
 						}else{
 							conceptModule.put(cont, spl[3]);
 						}
@@ -707,14 +702,15 @@ public class ClassificationRunner {
 		fos=null;
 	}
 	
-	private  void updateRel(final BufferedWriter bw,final Relationship prevRel, final Relationship currentRel)
+	private void updateRel(final BufferedWriter bw,final Relationship prevRel, final Relationship currentRel)
 			throws  IOException {
-		
-		writeRF2TypeLine(bw,prevRel.getRelId(),releaseDate,"1",currentRel.getModuleId(),conRefList.get(currentRel.getSourceId()),
-				conRefList.get(currentRel.getDestinationId()),currentRel.getGroup(),conRefList.get(currentRel.getTypeId()),
-				I_Constants.INFERRED, I_Constants.SOMEMODIFIER);
-		//add to the retired set so that previous version is dropped.
-		retiredSet.add(prevRel.getRelId());
+		if (I_Constants.CORE_MODULE_ID.equals(this.module)) {
+			writeRF2TypeLine(bw,prevRel.getRelId(),releaseDate,"1",currentRel.getModuleId(),conRefList.get(currentRel.getSourceId()),
+					conRefList.get(currentRel.getDestinationId()),currentRel.getGroup(),conRefList.get(currentRel.getTypeId()),
+					I_Constants.INFERRED, I_Constants.SOMEMODIFIER);
+			//add to the retired set so that previous version is dropped without inactivation as module id is mutable.
+			retiredSet.add(prevRel.getRelId());
+		} 
 	}
 
 	/**
@@ -1133,7 +1129,7 @@ public class ClassificationRunner {
 	 * @param rel_A the rel_ a
 	 * @throws java.io.IOException Signals that an I/O exception has occurred.
 	 */
-	private  void writeBackRetired(final BufferedWriter bw,final Relationship rel_A)
+	private void writeBackRetired(final BufferedWriter bw,final Relationship rel_A)
 			throws IOException {
 		retiredSet.add(rel_A.getRelId());
 		String moduleC1= rel_A.getModuleId();

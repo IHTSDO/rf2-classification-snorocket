@@ -25,7 +25,7 @@ public class ClassifierRunnerIntegrationTest {
 		effectiveTimeSnomedFormat ="20170131";
 		String rootDir = "/Users/mchu/Downloads/classifierTest/";
 		localConceptFilePaths = new ArrayList<String>();
-		localConceptFilePaths.add(rootDir + "xsct2_Concept_Snapshot_INT_20170131.txt");
+		localConceptFilePaths.add(rootDir + "xsct2_Concept_Snapshot_INT_20170131_modified.txt");
 		localStatedRelationshipFilePaths = new ArrayList<String>();
 		localStatedRelationshipFilePaths.add(rootDir + "xsct2_StatedRelationship_Snapshot_INT_20170131.txt");
 		previousInferredRelationshipFilePaths = new ArrayList<String>();
