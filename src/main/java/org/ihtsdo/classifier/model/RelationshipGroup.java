@@ -31,117 +31,43 @@ package org.ihtsdo.classifier.model;
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.List;
+import java.util.*;
 
 /**
- * The Class RelationshipGroup.
- * Represents a relationships list.
+ * A self sorting relationships set.
  */
-public class RelationshipGroup extends ArrayList<Relationship> {
-    
+public class RelationshipGroup extends TreeSet<Relationship> {
+
     /** The Constant serialVersionUID. */
     private static final long serialVersionUID = 1L;
-    
+
     /** The Constant debug. */
-    private static final boolean debug = false; // :DEBUG:
+    // SORT BY [ROLE-C2-GROUP-C2]
+    private static final Comparator<Relationship> RELATIONSHIP_COMPARATOR = new Comparator<Relationship>() {
+		public int compare(Relationship o1, Relationship o2) {
+			int thisMore = 1;
+			int thisLess = -1;
+			if (o1.getTypeId() > o2.getTypeId()) {
+				return thisMore;
+			} else if (o1.getTypeId() < o2.getTypeId()) {
+				return thisLess;
+			} else {
+				if (o1.getDestinationId() > o2.getDestinationId()) {
+					return thisMore;
+				} else if (o1.getDestinationId() < o2.getDestinationId()) {
+					return thisLess;
+				} else {
+					return 0; // EQUAL
+				}
+			}
+		} // compare()
+	};
 
     /**
-     * Instantiates a new sno grp.
-     *
-     * @param relationships the relationships list
-     * @param sort true if the list needs to be sorted
-     */
-    public RelationshipGroup(List<Relationship> relationships, boolean sort) {
-        super();
-        // set doSort = true if list not pre-sorted to C1-Group-Type-C2 order
-        if (sort)
-            Collections.sort(relationships);
-        this.addAll(relationships);
-       
-    }
-
-    /**
-     * Instantiates a new sno grp.
-     *
-     * @param o the o
-     */
-    public RelationshipGroup(Relationship o) {
-        super();
-        this.add(o); // 
-    }
-
-    /**
-     * Instantiates a new sno grp.
+     * Instantiates a self sorting relationship group.
      */
     public RelationshipGroup() {
-        super();
-    }
-
-    /**
-     * Adds the all with sort.
-     *
-     * @param roleGroupB the role group b
-     * @return the sno grp
-     */
-    public RelationshipGroup addAllWithSort(RelationshipGroup roleGroupB) {
-
-        this.addAll(roleGroupB);
-        // SORT BY [ROLE-C2-GROUP-C2]
-        Comparator<Relationship> comp = new Comparator<Relationship>() {
-            public int compare(Relationship o1, Relationship o2) {
-                int thisMore = 1;
-                int thisLess = -1;
-                if (o1.getTypeId() > o2.getTypeId()) {
-                    return thisMore;
-                } else if (o1.getTypeId() < o2.getTypeId()) {
-                    return thisLess;
-                } else {
-                    if (o1.getDestinationId() > o2.getDestinationId()) {
-                        return thisMore;
-                    } else if (o1.getDestinationId() < o2.getDestinationId()) {
-                        return thisLess;
-                    } else {
-                        return 0; // EQUAL
-                    }
-                }
-            } // compare()
-        };
-        Collections.sort(this, comp);
-
-        return this;
-    }
-
-    /**
-     * Sort by type.
-     *
-     * @return the sno grp
-     */
-    public RelationshipGroup sortByType() {
-        // SORT BY [ROLE-C2-GROUP-C2]
-        Comparator<Relationship> comp = new Comparator<Relationship>() {
-            public int compare(Relationship o1, Relationship o2) {
-                int thisMore = 1;
-                int thisLess = -1;
-                if (o1.getTypeId() > o2.getTypeId()) {
-                    return thisMore;
-                } else if (o1.getTypeId() < o2.getTypeId()) {
-                    return thisLess;
-                } else {
-                    if (o1.getDestinationId() > o2.getDestinationId()) {
-                        return thisMore;
-                    } else if (o1.getDestinationId() < o2.getDestinationId()) {
-                        return thisLess;
-                    } else {
-                        return 0; // EQUAL
-                    }
-                }
-            } // compare()
-        };
-        Collections.sort(this, comp);
-        return this;
+        super(RELATIONSHIP_COMPARATOR);
     }
 
     /**
@@ -156,42 +82,26 @@ public class RelationshipGroup extends ArrayList<Relationship> {
      */
     public boolean equals(RelationshipGroup roleGroupB) {
         int sizeA = this.size();
-        if (sizeA != roleGroupB.size())
+        if (sizeA != roleGroupB.size()) {
             return false; // trivial case, does not have same number of elements
+        }
 
-        if (sizeA == 0)
+        if (sizeA == 0) {
             return true; // trivial case, both empty
-
-        int i = 0;
-        boolean isSame = true;
-        while (i < sizeA) {
-            if (this.get(i).getTypeId() != roleGroupB.get(i).getTypeId() || this.get(i).getDestinationId() != roleGroupB.get(i).getDestinationId()) {
-                isSame = false;
-                break;
-            }
-            i++;
         }
 
-        return isSame;
-    }
-
-    /**
-     * Find logically equivalent role group from role group list provided. <br>
-     * <br>
-     * <font color=#990099> IMPLEMENTATION NOTE: roleGroups MUST be pre-sorted
-     * in C1-Group-Type-C2 order for this routine. Pre-sorting is used to
-     * provide overall computational efficiency.</font>
-     *
-     * @param groupList_B the group list_ b
-     * @return RelationshipGroup iff logically equivalent role group found
-     */
-    public RelationshipGroup findLogicalEquivalent(RelationshipGroupList groupList_B) {
-        for (RelationshipGroup relationshipGroup : groupList_B) {
-            if (this.equals(relationshipGroup)) {
-                return relationshipGroup;
+        Iterator<Relationship> iteratorA = this.iterator();
+        Iterator<Relationship> iteratorB = roleGroupB.iterator();
+        Relationship relationshipA;
+        Relationship relationshipB;
+        while ((relationshipA = iteratorA.next()) != null) {
+            relationshipB = iteratorB.next();
+            if (relationshipA.getTypeId() != relationshipB.getTypeId() || relationshipA.getDestinationId() != relationshipB.getDestinationId()) {
+                return false;
             }
         }
-        return null;
+
+        return true;
     }
 
 } // class RelationshipGroup

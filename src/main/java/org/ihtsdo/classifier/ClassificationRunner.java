@@ -999,7 +999,7 @@ public class ClassificationRunner {
 				if (groupList_B.size() > 0) {
 					groupList_NotEqual = groupList_B.whichNotEqual(groupList_A);
 					for (final RelationshipGroup sg : groupList_NotEqual) {
-						if (sg.get(0).getGroup() != 0) {
+						if (sg.iterator().next().getGroup() != 0) {
 							rgNum = nextRoleGroupNumber(groupList_A, rgNum);
 							for (final Relationship sr_B : sg) {
 								sr_B.setGroup(rgNum);
@@ -1183,7 +1183,7 @@ public class ClassificationRunner {
 
 			boolean exists = false;
 			for (int i = 0; i < sglSize; i++) {
-				if (sgl.get(i).get(0).getGroup() == testNum) {
+				if (sgl.get(i).iterator().next().getGroup() == testNum) {
 					exists = true;
 				}
 			}
