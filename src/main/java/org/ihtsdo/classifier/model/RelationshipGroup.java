@@ -94,7 +94,7 @@ public class RelationshipGroup extends TreeSet<Relationship> {
         Iterator<Relationship> iteratorB = roleGroupB.iterator();
         Relationship relationshipA;
         Relationship relationshipB;
-        while ((relationshipA = iteratorA.next()) != null) {
+        while (iteratorA.hasNext() && (relationshipA = iteratorA.next()) != null) {
             relationshipB = iteratorB.next();
             if (relationshipA.getTypeId() != relationshipB.getTypeId() || relationshipA.getDestinationId() != relationshipB.getDestinationId()) {
                 return false;
