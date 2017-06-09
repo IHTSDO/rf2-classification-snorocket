@@ -212,7 +212,7 @@ public class ClassificationRunner {
 			final int ridx = roles.length;
 			logger.info("\r\n::: Number of roles "+roles.length);
 			if (roles.length > 150) {
-				final String errStr = "Role types exceeds 100. This will cause a memory issue. "
+				final String errStr = "Role types exceeds 150. This will cause a memory issue. "
 						+ "Please check that role root is set to 'Concept mode attribute'";
 				logger.error(errStr);
 				throw new ClassificationException(errStr);
