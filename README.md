@@ -1,6 +1,12 @@
-###rf2-classification-snorocket
-============================
 
+# Deprecation Notice
+
+Please note - that this project is now out of date. This project is missing several description logic enhancements which are necessary to accurately classify SNOMED CT since the January 2018 International Edition. This project has been replaced by the [Classification Service](https://github.com/IHTSDO/classification-service) which is in production use and contains all the latest fixes and enhacements. Please do not use this RF2 Classification SnoRocket project.
+
+
+
+
+## rf2-classification-snorocket
 This project supports the classification of SNOMED CT Stated Relationships in RF2 format using the SNOROCKET Reasoner.
 
 ============================
